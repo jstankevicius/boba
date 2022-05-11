@@ -1,0 +1,5 @@
+@entry
+fn somefunction(x: int, y: int) : int {
+    let str : string = "Hello world!";
+    return x + y;
+}
