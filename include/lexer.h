@@ -8,23 +8,6 @@
 #define is_alphanumeric(c) (is_alpha(c) || is_numeric(c))
 #define is_operator(c) (c == '=' || c == '<' || c == '>' || c == '+' || c == '-' || c == '*' || c == '/')
 
-struct Lexer {
-    int stream_idx = 0;
-
-    int line_num = 1;
-    int col_num = 1;
-
-    std::string stream;
-    std::vector<Token*> tokens;
-    
-    Lexer(std::string stream);
-    char cur_char();
-    void advance_char();
-    char lookahead_char(int lookahead);
-    void skip_whitespace();
-    bool done();
-};
-
 enum Token_Type {
     IDENTIFIER,
     KEYWORD,
@@ -37,6 +20,7 @@ enum Token_Type {
     OTHER,
     ERROR
 };
+
 
 struct Token {
 
@@ -51,6 +35,23 @@ struct Token {
         float float_value;
     };
 
+};
+
+struct Lexer {
+    int stream_idx = 0;
+
+    int line_num = 1;
+    int col_num = 1;
+
+    std::string stream;
+    std::vector<Token*> tokens;
+
+    Lexer(std::string stream);
+    char cur_char();
+    void advance_char();
+    char lookahead_char(int lookahead);
+    void skip_whitespace();
+    bool done();
 };
 
 std::vector<Token *> get_tokens(Lexer* lexer);
