@@ -1,0 +1,19 @@
+Some ideas for Stutter:
+
+An (pure?) functional interpreted language that does some optimization before
+running the program.
+
+Every declaration is set of statements, and the result of the declaration is the
+result of the last statement in the set. Essentially, we treat all variables as
+functions, even though they may be returning constants. This overhead can be
+taken care of during the optimization phase, where we start simply inlining
+everything we can.
+
+Type inference is a gigantic pain, so we should probably enforce some typing.
+Inference about return values can be done pretty easily by looking at the type
+of the last statement, but how do we perform inference about what gets passed
+into a function?
+
+Or maybe just don't do any type inference?
+
+

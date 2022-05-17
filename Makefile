@@ -129,6 +129,30 @@ stutter/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/build
 .PHONY : stutter/fast
 
+src/error.o: src/error.cpp.o
+.PHONY : src/error.o
+
+# target to build an object file
+src/error.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/error.cpp.o
+.PHONY : src/error.cpp.o
+
+src/error.i: src/error.cpp.i
+.PHONY : src/error.i
+
+# target to preprocess a source file
+src/error.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/error.cpp.i
+.PHONY : src/error.cpp.i
+
+src/error.s: src/error.cpp.s
+.PHONY : src/error.s
+
+# target to generate assembly for a file
+src/error.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/error.cpp.s
+.PHONY : src/error.cpp.s
+
 src/lexer.o: src/lexer.cpp.o
 .PHONY : src/lexer.o
 
@@ -152,6 +176,30 @@ src/lexer.s: src/lexer.cpp.s
 src/lexer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/lexer.cpp.s
 .PHONY : src/lexer.cpp.s
+
+src/parser.o: src/parser.cpp.o
+.PHONY : src/parser.o
+
+# target to build an object file
+src/parser.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/parser.cpp.o
+.PHONY : src/parser.cpp.o
+
+src/parser.i: src/parser.cpp.i
+.PHONY : src/parser.i
+
+# target to preprocess a source file
+src/parser.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/parser.cpp.i
+.PHONY : src/parser.cpp.i
+
+src/parser.s: src/parser.cpp.s
+.PHONY : src/parser.s
+
+# target to generate assembly for a file
+src/parser.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/parser.cpp.s
+.PHONY : src/parser.cpp.s
 
 src/stutter.o: src/stutter.cpp.o
 .PHONY : src/stutter.o
@@ -186,9 +234,15 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... stutter"
+	@echo "... src/error.o"
+	@echo "... src/error.i"
+	@echo "... src/error.s"
 	@echo "... src/lexer.o"
 	@echo "... src/lexer.i"
 	@echo "... src/lexer.s"
+	@echo "... src/parser.o"
+	@echo "... src/parser.i"
+	@echo "... src/parser.s"
 	@echo "... src/stutter.o"
 	@echo "... src/stutter.i"
 	@echo "... src/stutter.s"

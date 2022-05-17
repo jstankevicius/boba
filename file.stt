@@ -1,5 +1,6 @@
-@entry
-fn somefunction(x: int, y: int) : int {
-    let str : string = "Hello world!";
-    return x + y;
+let f :: x y = x + y
+
+let main = {
+    let s = "Hello world!"
+    f 2 3
 }

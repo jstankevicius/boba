@@ -19,9 +19,19 @@ int main()
     std::string content((std::istreambuf_iterator<char>(file)),
                         (std::istreambuf_iterator<char>()   ));
 
-    std::cout << "File contents:" << std::endl;
-    std::cout << content << std::endl;
+    Lexer lexer(content);
+    std::vector<Token*> tokens = get_tokens(&lexer);
 
-    Lexer* lexer = new Lexer(content);
-    get_tokens(lexer);
+    std::cout << "Tokens: [";
+    
+    for (auto token : tokens) {
+        if (token->string_value.length() > 0)
+            std::cout << token->string_value << ", ";
+        else if (token->type == TOKEN_INT_LITERAL || token->type == TOKEN_FLOAT_LITERAL)
+            std::cout << token->int_value << ", ";
+        else
+            std::cout << "TOKEN_TYPE_" << token->type << ", ";
+    }
+
+    std::cout << "]" << std::endl;
 }

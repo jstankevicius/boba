@@ -1,41 +1,20 @@
+#pragma once
+
 #include <vector>
 #include <string.h>
+#include <unordered_map>
+
+#include "token.h"
 
 // Macros:
 #define is_alpha(c) (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') || c == '_')
 #define is_numeric(c) ('0' <= c && c <= '9')
-#define is_whitespace(c) (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+#define is_whitespace(c) (c == ' ' || c == '\t')
 #define is_alphanumeric(c) (is_alpha(c) || is_numeric(c))
-#define is_operator(c) (c == '=' || c == '<' || c == '>' || c == '+' || c == '-' || c == '*' || c == '/')
 
-enum Token_Type {
-    IDENTIFIER,
-    KEYWORD,
-
-    INT_LITERAL,
-    FLOAT_LITERAL,
-    STR_LITERAL,
-    
-    OPERATOR,
-    OTHER,
-    ERROR
-};
-
-
-struct Token {
-
-    int line_num, col_num;
-
-    Token_Type type = OTHER;
-
-    // TODO: more types eventually?
-    union {
-        std::string string_value = "";
-        int int_value;
-        float float_value;
-    };
-
-};
+#define is_arithmetic_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' || c == '^')
+#define is_comparator(c) (c == '=' || c == '<' || c == '>')
+#define is_operator(c) (is_comparator(c) || is_arithmetic_operator(c))
 
 struct Lexer {
     int stream_idx = 0;
@@ -46,13 +25,18 @@ struct Lexer {
     std::string stream;
     std::vector<Token*> tokens;
 
-    Lexer(std::string stream);
+    std::unordered_map<std::string, Token_Type> reserved_types;
+
+    Lexer(std::string& stream);
+
     char cur_char();
     void advance_char();
     char lookahead_char(int lookahead);
+    char lookahead_char_at(int idx, int lookahead);
     void skip_whitespace();
     bool done();
+
 };
 
-std::vector<Token *> get_tokens(Lexer* lexer);
+std::vector<Token*> get_tokens(Lexer* lexer);
 

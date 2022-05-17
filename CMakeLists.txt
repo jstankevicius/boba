@@ -18,6 +18,8 @@ include_directories (${PROJECT_SOURCE_DIR}/${INCL_DIR})
 set (STUTTER_SRC
     ${SRC_DIR}/stutter.cpp
     ${SRC_DIR}/lexer.cpp
+    ${SRC_DIR}/parser.cpp
+    ${SRC_DIR}/error.cpp
 )
 
 # Output folder
