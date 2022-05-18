@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string.h>
 #include <fstream>
+#include <deque>
 
 #include "lexer.h"
 
@@ -20,10 +21,10 @@ int main()
                         (std::istreambuf_iterator<char>()   ));
 
     Lexer lexer(content);
-    std::vector<Token*> tokens = get_tokens(&lexer);
+    std::deque<Token*> tokens = lexer.tokenize_stream();
 
     std::cout << "Tokens: [";
-    
+
     for (auto token : tokens) {
         if (token->string_value.length() > 0)
             std::cout << token->string_value << ", ";

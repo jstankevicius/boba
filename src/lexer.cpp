@@ -90,86 +90,86 @@ void Lexer::skip_whitespace() {
     }
 }
 
-Token* get_identifier_or_keyword(Lexer* lexer)  {
+Token* Lexer::get_identifier_or_keyword()  {
 
     Token* token = new Token;
-    token->col_num = lexer->col_num;
-    token->line_num = lexer->line_num;
-    token->stream = &lexer->stream;
+    token->col_num = col_num;
+    token->line_num = line_num;
+    token->stream = &stream;
     std::string identifier;
 
     // Don't need to check for out of bounds since cur_char just returns -1 once
     // we've reached the end of the stream.
-    while (is_alphanumeric(lexer->cur_char())) {
-        identifier += lexer->cur_char();
-        lexer->advance_char();
+    while (is_alphanumeric(cur_char())) {
+        identifier += cur_char();
+        advance_char();
     }
 
     token->string_value = identifier;
 
-    if (lexer->reserved_types.find(identifier) != lexer->reserved_types.end())
-        token->type = lexer->reserved_types[identifier];
+    if (reserved_types.find(identifier) != reserved_types.end())
+        token->type = reserved_types[identifier];
     else
         token->type = TOKEN_IDENT;
 
     return token;
 }
 
-Token* get_operator(Lexer* lexer) {
+Token* Lexer::get_operator() {
 
     Token* token = new Token;
-    token->col_num = lexer->col_num;
-    token->line_num = lexer->line_num;
-    token->stream = &lexer->stream;
+    token->col_num = col_num;
+    token->line_num = line_num;
+    token->stream = &stream;
     std::string op;
 
-    op += lexer->cur_char();
-    lexer->advance_char();
+    op += cur_char();
+    advance_char();
 
     // Handle cases for ==, <=, >=
-    if (lexer->cur_char() == '=') {
-        op += lexer->cur_char();
-        lexer->advance_char();
+    if (cur_char() == '=') {
+        op += cur_char();
+        advance_char();
     }
 
     token->string_value = op;
 
-    if (lexer->reserved_types.find(op) != lexer->reserved_types.end())
-        token->type = lexer->reserved_types[op];
+    if (reserved_types.find(op) != reserved_types.end())
+        token->type = reserved_types[op];
     else
         error(token, "unrecognized operator");
 
     return token;
 }
 
-Token* get_numeric_literal(Lexer* lexer) {
+Token* Lexer::get_numeric_literal() {
 
     Token* token = new Token;
-    token->col_num = lexer->col_num;
-    token->line_num = lexer->line_num;
-    token->stream = &lexer->stream;
+    token->col_num = col_num;
+    token->line_num = line_num;
+    token->stream = &stream;
     std::string num_literal;
     bool is_float_literal = false;
 
-    while (is_numeric(lexer->cur_char())) {
-        num_literal += lexer->cur_char();
-        lexer->advance_char();
+    while (is_numeric(cur_char())) {
+        num_literal += cur_char();
+        advance_char();
     }
 
     // Next character could potentially be a '.', which would make this a float
     // literal.
-    if (lexer->stream_idx - 1 < lexer->stream.length()) {
+    if (stream_idx - 1 < stream.length()) {
 
-        if (lexer->cur_char() == '.' && is_numeric(lexer->lookahead_char(1))) {
+        if (cur_char() == '.' && is_numeric(lookahead_char(1))) {
             is_float_literal = true;
-            num_literal += lexer->cur_char();
-            lexer->advance_char();
+            num_literal += cur_char();
+            advance_char();
         }
 
         // Case of a float without anything following the decimal. We should
         // probably keep this as an error since we're basically enforcing having
         // a leading 0 in front of a decimal already.
-        else if (lexer->cur_char() == '.' && !is_numeric(lexer->lookahead_char(1))) {
+        else if (cur_char() == '.' && !is_numeric(lookahead_char(1))) {
             // TODO: fail here
             token->type = TOKEN_ERROR;
             return token;
@@ -177,9 +177,9 @@ Token* get_numeric_literal(Lexer* lexer) {
     }
 
     // Add the decimal part, if it exists.
-    while (is_numeric(lexer->cur_char())) {
-        num_literal += lexer->cur_char();
-        lexer->advance_char();
+    while (is_numeric(cur_char())) {
+        num_literal += cur_char();
+        advance_char();
     }
 
     if (is_float_literal) {
@@ -194,14 +194,14 @@ Token* get_numeric_literal(Lexer* lexer) {
     return token;
 }
 
-Token* get_punctuation(Lexer* lexer) {
+Token* Lexer::get_punctuation() {
     
     Token* token = new Token;
-    token->col_num = lexer->col_num;
-    token->line_num = lexer->line_num;
-    token->stream = &lexer->stream;
+    token->col_num = col_num;
+    token->line_num = line_num;
+    token->stream = &stream;
 
-    switch (lexer->cur_char()) {
+    switch (cur_char()) {
         case '(':
             token->type = TOKEN_PAREN_OPEN;
             break;
@@ -215,9 +215,9 @@ Token* get_punctuation(Lexer* lexer) {
             token->type = TOKEN_CURLY_CLOSE;
             break;
         case ':':
-            if (lexer->lookahead_char(1) == ':') {
+            if (lookahead_char(1) == ':') {
                 token->type = TOKEN_PARAM_INDICATOR;
-                lexer->advance_char();
+                advance_char();
                 break;
             }
         default:
@@ -225,30 +225,30 @@ Token* get_punctuation(Lexer* lexer) {
             break;
     }
     
-    lexer->advance_char();
+    advance_char();
     return token;
 }
 
-Token* get_string_literal(Lexer* lexer) {
+Token* Lexer::get_string_literal() {
 
     Token* token = new Token;
-    token->col_num = lexer->col_num;
-    token->line_num = lexer->line_num;
-    token->stream = &lexer->stream;
+    token->col_num = col_num;
+    token->line_num = line_num;
+    token->stream = &stream;
     std::string str_literal;
 
-    str_literal += lexer->cur_char();
-    lexer->advance_char();
+    str_literal += cur_char();
+    advance_char();
 
-    while (lexer->cur_char() != '"' && !lexer->done()) {
-        str_literal += lexer->cur_char();
-        lexer->advance_char();
+    while (cur_char() != '"' && !done()) {
+        str_literal += cur_char();
+        advance_char();
     }
 
     // Add in closing quote, if it exists:
-    if (lexer->cur_char() == '"') {
-        str_literal += lexer->cur_char();
-        lexer->advance_char();
+    if (cur_char() == '"') {
+        str_literal += cur_char();
+        advance_char();
     } else {
         // No matching quote
         error(token, "no matching quote");
@@ -259,50 +259,50 @@ Token* get_string_literal(Lexer* lexer) {
     return token;
 }
 
-Token* get_end_of_line(Lexer* lexer) {
+Token* Lexer::get_end_of_line() {
     // \n or \r\n?
-    assert(lexer->cur_char() == '\n' || lexer->cur_char() == '\r');
+    assert(cur_char() == '\n' || cur_char() == '\r');
 
     Token* token = new Token;
-    token->col_num = lexer->col_num;
-    token->line_num = lexer->line_num;
-    token->stream = &lexer->stream;
+    token->col_num = col_num;
+    token->line_num = line_num;
+    token->stream = &stream;
     token->type = TOKEN_EOL;
 
-    if (lexer->cur_char() == '\n')
-        lexer->advance_char();
-    else if (lexer->cur_char() == '\r' && lexer->lookahead_char(1) == '\n')
-        lexer->advance_char();
+    if (cur_char() == '\n')
+        advance_char();
+    else if (cur_char() == '\r' && lookahead_char(1) == '\n')
+        advance_char();
 
     return token;
 }
 
-std::vector<Token*> get_tokens(Lexer* lexer)  {
+std::deque<Token*> Lexer::tokenize_stream()  {
 
-    std::vector<Token*> tokens;
+    std::deque<Token*> tokens;
 
-    while (!lexer->done()) {
+    while (!done()) {
 
         // Add the identifier token:
-        if (is_alpha(lexer->cur_char()))
-            tokens.push_back(get_identifier_or_keyword(lexer));
-        else if (is_operator(lexer->cur_char()))
-            tokens.push_back(get_operator(lexer));
-        else if (is_numeric(lexer->cur_char()))
-            tokens.push_back(get_numeric_literal(lexer));
+        if (is_alpha(cur_char()))
+            tokens.push_back(get_identifier_or_keyword());
+        else if (is_operator(cur_char()))
+            tokens.push_back(get_operator());
+        else if (is_numeric(cur_char()))
+            tokens.push_back(get_numeric_literal());
 
         // Beginning of a string literal
-        else if (lexer->cur_char() == '"')
-            tokens.push_back(get_string_literal(lexer));
-        else if (lexer->cur_char() == '\r' || lexer->cur_char() == '\n')
-            tokens.push_back(get_end_of_line(lexer));
+        else if (cur_char() == '"')
+            tokens.push_back(get_string_literal());
+        else if (cur_char() == '\r' || cur_char() == '\n')
+            tokens.push_back(get_end_of_line());
 
         // Everything else is assumed to be punctuation
         else
-            tokens.push_back(get_punctuation(lexer));
+            tokens.push_back(get_punctuation());
 
         // Skip whitespace characters
-        lexer->skip_whitespace();
+        skip_whitespace();
     }
 
     Token* eof_token = new Token;
