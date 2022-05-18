@@ -1,5 +1,5 @@
 #include <iostream>
-#include <string.h>
+#include <string>
 #include <vector>
 
 #include "error.h"
@@ -309,6 +309,5 @@ std::deque<Token*> Lexer::tokenize_stream()  {
     eof_token->type = TOKEN_EOF;
     tokens.push_back(eof_token);
 
-    
     return tokens;
 }
