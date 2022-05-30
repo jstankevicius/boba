@@ -41,13 +41,15 @@ enum Token_Type {
     TOKEN_OPERATOR_AND,
     TOKEN_OPERATOR_NOT,
 
-    // "Punctuation" - basically single chars like parens, braces, brackets,
-    // dots, and commas.
+    // Punctuation, i.e. characters and symbols that are not operators but have
+    // some kind of meaning in the language.
     TOKEN_PAREN_OPEN,
     TOKEN_PAREN_CLOSE,
     TOKEN_CURLY_OPEN,
     TOKEN_CURLY_CLOSE,
     TOKEN_PARAM_INDICATOR,
+    TOKEN_TYPE_SIG,
+    TOKEN_LEFT_ARROW,
 
     // End of line
     TOKEN_EOL,

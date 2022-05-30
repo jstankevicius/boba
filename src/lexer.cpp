@@ -40,6 +40,7 @@ Lexer::Lexer(std::string& stream) {
     this->reserved_types["{"]    = TOKEN_CURLY_OPEN;
     this->reserved_types["}"]    = TOKEN_CURLY_CLOSE;
     this->reserved_types["::"]   = TOKEN_PARAM_INDICATOR;
+    this->reserved_types["->"]   = TOKEN_LEFT_ARROW;
 }
 
 bool Lexer::done() {
@@ -150,6 +151,12 @@ Token* Lexer::get_numeric_literal() {
     token->stream = &stream;
     std::string num_literal;
     bool is_float_literal = false;
+    int sign = 1;
+
+    if (cur_char() == '-') {
+        sign = -1;
+        advance_char();
+    }
 
     while (is_numeric(cur_char())) {
         num_literal += cur_char();
@@ -158,22 +165,15 @@ Token* Lexer::get_numeric_literal() {
 
     // Next character could potentially be a '.', which would make this a float
     // literal.
-    if (stream_idx - 1 < stream.length()) {
+    if (cur_char() == '.' && is_numeric(lookahead_char(1))) {
+        is_float_literal = true;
+        num_literal += cur_char();
+        advance_char();
+    }
 
-        if (cur_char() == '.' && is_numeric(lookahead_char(1))) {
-            is_float_literal = true;
-            num_literal += cur_char();
-            advance_char();
-        }
-
-        // Case of a float without anything following the decimal. We should
-        // probably keep this as an error since we're basically enforcing having
-        // a leading 0 in front of a decimal already.
-        else if (cur_char() == '.' && !is_numeric(lookahead_char(1))) {
-            // TODO: fail here
-            token->type = TOKEN_ERROR;
-            return token;
-        }
+    else if (cur_char() == '.' && !is_numeric(lookahead_char(1))) {
+        // TODO: fail here
+        error(token, "decimals in the form of 'x.' are not allowed");
     }
 
     // Add the decimal part, if it exists.
@@ -184,13 +184,14 @@ Token* Lexer::get_numeric_literal() {
 
     if (is_float_literal) {
         token->type = TOKEN_FLOAT_LITERAL;
-        token->float_value = std::stof(num_literal);
+        token->float_value = std::stof(num_literal) * sign;
     }
+
     else {
         token->type = TOKEN_INT_LITERAL;
-        token->int_value = std::stoi(num_literal);
+        token->int_value = std::stoi(num_literal) * sign;
     }
-    
+
     return token;
 }
 
@@ -200,6 +201,7 @@ Token* Lexer::get_punctuation() {
     token->col_num = col_num;
     token->line_num = line_num;
     token->stream = &stream;
+    token->string_value += cur_char();
 
     switch (cur_char()) {
         case '(':
@@ -218,13 +220,23 @@ Token* Lexer::get_punctuation() {
             if (lookahead_char(1) == ':') {
                 token->type = TOKEN_PARAM_INDICATOR;
                 advance_char();
+                token->string_value += cur_char();
+                break;
+            }
+        case '@':
+            token->type = TOKEN_TYPE_SIG;
+            break;
+        case '-':
+            if (lookahead_char(1) == '>') {
+                token->type = TOKEN_LEFT_ARROW;
+                advance_char();
+                token->string_value += cur_char();
                 break;
             }
         default:
             error(token, "unrecognized character");
             break;
     }
-    
     advance_char();
     return token;
 }
@@ -269,10 +281,14 @@ Token* Lexer::get_end_of_line() {
     token->stream = &stream;
     token->type = TOKEN_EOL;
 
-    if (cur_char() == '\n')
-        advance_char();
-    else if (cur_char() == '\r' && lookahead_char(1) == '\n')
-        advance_char();
+    while (cur_char() == '\n' || cur_char() == '\n') {
+        if (cur_char() == '\n')
+            advance_char();
+        else if (cur_char() == '\r' && lookahead_char(1) == '\n') {
+            advance_char();
+            advance_char();
+        }
+    }
 
     return token;
 }
@@ -286,8 +302,34 @@ std::deque<Token*> Lexer::tokenize_stream()  {
         // Add the identifier token:
         if (is_alpha(cur_char()))
             tokens.push_back(get_identifier_or_keyword());
+
+        // The minus character is confusing, since it can mean three different
+        // things: 
+        // 1. The binary subtraction operator
+        // 2. The unary negation operator
+        // 3. The "left arrow" punctuation symbol
+
+        // We could just leave it as an operator in all cases, but since we can
+        // explicitly store values like "-1" and "-3.14" in memory, we should
+        // avoid the overhead of having to do "0 - 1" and "0 - 3.14" in the
+        // interpreter. In cases like "-some_identifier", we'll leave it as an
+        // operator and leave it up to the interpreter.
+        else if (cur_char() == '-') {
+
+            // ->
+            if (lookahead_char(1) == '>')
+                tokens.push_back(get_punctuation());
+
+            // Negative numbers
+            else if (is_numeric(lookahead_char(1)) || lookahead_char(1) == '.')
+                tokens.push_back(get_numeric_literal());
+
+            // Otherwise, just leave it to be processed by get_operator().
+        }
+
         else if (is_operator(cur_char()))
             tokens.push_back(get_operator());
+        
         else if (is_numeric(cur_char()))
             tokens.push_back(get_numeric_literal());
 
@@ -296,6 +338,18 @@ std::deque<Token*> Lexer::tokenize_stream()  {
             tokens.push_back(get_string_literal());
         else if (cur_char() == '\r' || cur_char() == '\n')
             tokens.push_back(get_end_of_line());
+
+        // Comments. We'll just skip the rest of the line here.
+        else if (cur_char() == '#') {
+            advance_char(); // skip over #
+            while (cur_char() != '\n' && cur_char() != '\n') advance_char();
+            if (cur_char() == '\n')
+                advance_char();
+            else if (cur_char() == '\r' && lookahead_char(1) == '\n') {
+                advance_char();
+                advance_char();
+            }
+        }
 
         // Everything else is assumed to be punctuation
         else

@@ -28,10 +28,12 @@ int main()
     for (auto token : tokens) {
         if (token->string_value.length() > 0)
             std::cout << token->string_value << ", ";
-        else if (token->type == TOKEN_INT_LITERAL || token->type == TOKEN_FLOAT_LITERAL)
+        else if (token->type == TOKEN_INT_LITERAL)
             std::cout << token->int_value << ", ";
+        else if (token->type == TOKEN_FLOAT_LITERAL)
+            std::cout << token->float_value << ", ";
         else
-            std::cout << "TOKEN_TYPE_" << token->type << ", ";
+            std::cout << token->string_value << ", ";
     }
 
     std::cout << "]" << std::endl;
