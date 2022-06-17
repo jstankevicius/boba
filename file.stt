@@ -1,6 +1,3 @@
-let f :: x y = x + y
-
-let main = {
-    let s = "Hello world!"
-    f 2 3
-}
+; This is a comment!
+(def a 3)
+(+ 3 (* a 2))

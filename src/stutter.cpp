@@ -4,6 +4,7 @@
 #include <deque>
 
 #include "lexer.h"
+#include "parser.h"
 
 int main() 
 {
@@ -20,21 +21,15 @@ int main()
     std::string content((std::istreambuf_iterator<char>(file)),
                         (std::istreambuf_iterator<char>()   ));
 
-    Lexer lexer(content);
-    std::deque<Token*> tokens = lexer.tokenize_stream();
-
-    std::cout << "Tokens: [";
-
+    Lexer lexer;
+    Parser parser;
+    std::deque<Token*> tokens = lexer.tokenize_stream(content);
+    std::cout << "Tokens:" << std::endl;
     for (auto token : tokens) {
-        if (token->string_value.length() > 0)
-            std::cout << token->string_value << ", ";
-        else if (token->type == TOKEN_INT_LITERAL)
-            std::cout << token->int_value << ", ";
-        else if (token->type == TOKEN_FLOAT_LITERAL)
-            std::cout << token->float_value << ", ";
-        else
-            std::cout << token->string_value << ", ";
+        std::cout << token->string_value << " ";
     }
+    std::cout << std::endl;
 
-    std::cout << "]" << std::endl;
+    std::cout << "Parsing:" << std::endl;
+    parser.parse_tokens(tokens);
 }

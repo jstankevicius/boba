@@ -2,9 +2,8 @@
 #include <string.h>
 #include "error.h"
 
-void error(Token* token, std::string message) {
-
-    std::string stream = *token->stream; // probably bad practice
+void err_token(Token* token, std::string message) {
+    std::string stream = *(token->stream); // probably bad practice
     std::cout << "ERROR: line " << token->line_num << ", column " << token->col_num << std::endl;
 
     int i = 0;
@@ -21,7 +20,7 @@ void error(Token* token, std::string message) {
     // Print this entire current line:
     std::string line;
 
-    while (stream[i] != '\n' && stream[i] != '\r') {
+    while (stream[i] != '\n' && stream[i] != '\r' && i < stream.length()) {
         line += stream[i];
         i++;
     }
@@ -29,7 +28,9 @@ void error(Token* token, std::string message) {
 
     // Print the message under the line:
     for (int i = 1; i < token->col_num; i++) std::cout << " ";
-    std::cout << "^ " << message << std::endl;
-    
+    for (int i = 0; i < token->string_value.length(); i++) std::cout << "^";
+    std::cout << " " << message << std::endl;
+
     exit(-1);
 }
+

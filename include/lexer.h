@@ -8,10 +8,11 @@
 #include "token.h"
 
 // Macros:
-#define is_alpha(c) (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') || c == '_')
+#define is_alpha(c) (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z'))
+#define is_underscore(c) (c == '_')
 #define is_numeric(c) ('0' <= c && c <= '9')
-#define is_whitespace(c) (c == ' ' || c == '\t')
-#define is_alphanumeric(c) (is_alpha(c) || is_numeric(c))
+#define is_whitespace(c) (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+#define is_alphanumeric(c) (is_alpha(c) || is_numeric(c) || is_underscore(c))
 
 #define is_arithmetic_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' || c == '^')
 #define is_comparator(c) (c == '=' || c == '<' || c == '>')
@@ -25,7 +26,6 @@ class Lexer {
         int col_num = 1;
 
         std::string stream;
-        std::unordered_map<std::string, Token_Type> reserved_types;
 
         char cur_char();
         void advance_char();
@@ -42,8 +42,8 @@ class Lexer {
         Token* get_end_of_line();
 
     public:
-        Lexer(std::string& stream);
-        std::deque<Token*> tokenize_stream();
+        Lexer();
+        std::deque<Token*> tokenize_stream(std::string &stream);
 };
 
 
