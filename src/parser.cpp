@@ -7,9 +7,6 @@
 #include "ast.h"
 #include "lexer.h"
 
-#define is_symbol_or_literal(c) (c > TOKEN_EXPR)
-#define debug(s) (std::cout << s << std::endl)
-
 Parser::Parser() {}
 
 void show_ast(AST* ast, int indent_level) {
@@ -103,7 +100,7 @@ AST* Parser::parse_expression(std::deque<Token*> &tokens, AST* parent) {
         else if (front->string_value == "(") {
             ast->children.push_back(parse_expression(tokens, ast));
         } else {
-            err_token(front, "internal error: unhandled token type");
+            err_token(front, "internal parser error: unhandled token type");
         }
     }
     expect_token_string(")", tokens);

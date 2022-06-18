@@ -9,50 +9,50 @@
 Lexer::Lexer() {}
 
 bool Lexer::done() {
-    return this->stream_idx >= this->stream.length();
+    return stream_idx >= stream.length();
 }
 
 void Lexer::advance_char() {
 
-    char cur = this->cur_char();
-    if (!this->done()) {
-        this->stream_idx++;
-        this->col_num++;
+    char cur = cur_char();
+    if (!done()) {
+        stream_idx++;
+        col_num++;
 
-        if (cur == '\n' || (cur == '\r' && this->lookahead_char(1) == '\n')) {
+        if (cur == '\n' || (cur == '\r' && lookahead_char(1) == '\n')) {
             // If we went over to the next line, reset col_num to 1 and
             // increment line_num.
-            this->col_num = 1;
-            this->line_num++;
+            col_num = 1;
+            line_num++;
         }
     }
 }
 
 char Lexer::cur_char() {
 
-    if (!this->done())
-        return this->stream[this->stream_idx];
+    if (!done())
+        return stream[stream_idx];
     
     return -1;
 }
 
 char Lexer::lookahead_char(int lookahead) {
-    if (this->stream_idx + lookahead < this->stream.length())
-        return this->stream[this->stream_idx + lookahead];
+    if (stream_idx + lookahead < stream.length())
+        return stream[stream_idx + lookahead];
 
     return -1;
 }
 
 char Lexer::lookahead_char_at(int idx, int lookahead) {
-    if (idx + lookahead < this->stream.length())
-        return this->stream[idx + lookahead];
+    if (idx + lookahead < stream.length())
+        return stream[idx + lookahead];
 
     return -1;
 }
 
 void Lexer::skip_whitespace() {
-    while (is_whitespace(this->cur_char())) {
-        this->advance_char();
+    while (is_whitespace(cur_char())) {
+        advance_char();
     }
 }
 
@@ -109,10 +109,9 @@ Token* Lexer::get_numeric_literal() {
     token->stream = &stream;
     std::string num_literal;
     bool is_float_literal = false;
-    int sign = 1;
 
     if (cur_char() == '-') {
-        sign = -1;
+        num_literal += cur_char();
         advance_char();
     }
 
@@ -207,14 +206,20 @@ std::deque<Token*> Lexer::tokenize_stream(std::string &stream)  {
 
     while (!done()) {
 
-        // Add the identifier token:
+        // Identifiers can start with letters or underscores:
         if (is_alpha(cur_char()) || is_underscore(cur_char()))
             tokens.push_back(get_identifier_or_keyword());
+
+        // Case for negative numbers:
+        else if ((cur_char() == '-') 
+            && (lookahead_char(1) == '.' || is_numeric(lookahead_char(1))))
+                tokens.push_back(get_numeric_literal());
 
         else if (is_operator(cur_char()))
             tokens.push_back(get_operator());
         
-        else if (is_numeric(cur_char()))
+        else if (is_numeric(cur_char())
+            || (cur_char() == '.' && is_numeric(lookahead_char(1))))
             tokens.push_back(get_numeric_literal());
 
         // Beginning of a string literal

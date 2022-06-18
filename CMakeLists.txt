@@ -20,6 +20,7 @@ set (STUTTER_SRC
     ${SRC_DIR}/lexer.cpp
     ${SRC_DIR}/parser.cpp
     ${SRC_DIR}/error.cpp
+    ${SRC_DIR}/analyzer.cpp
 )
 
 # Output folder

@@ -35,7 +35,7 @@ struct AST {
         AST* child = new AST;
         child->type = type;
         child->string_value = string_value;
-        this->children.push_back(child);
+        children.push_back(child);
     }
 };
 
