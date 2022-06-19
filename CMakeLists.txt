@@ -10,7 +10,7 @@ set (SRC_DIR src)
 set (INCL_DIR include)
 
 # Compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror")
 
 include_directories (${PROJECT_SOURCE_DIR}/${INCL_DIR})
 

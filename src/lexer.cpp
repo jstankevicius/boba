@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <stdlib.h>
+#include <memory>
 
 #include "error.h"
 #include "lexer.h"
@@ -56,9 +56,9 @@ void Lexer::skip_whitespace() {
     }
 }
 
-Token* Lexer::get_identifier_or_keyword()  {
+std::shared_ptr<Token> Lexer::get_identifier_or_keyword()  {
 
-    Token* token = new Token;
+    auto token = std::make_shared<Token>();
     token->col_num = col_num;
     token->line_num = line_num;
     token->stream = &stream;
@@ -82,9 +82,9 @@ Token* Lexer::get_identifier_or_keyword()  {
     return token;
 }
 
-Token* Lexer::get_operator() {
+std::shared_ptr<Token> Lexer::get_operator() {
 
-    Token* token = new Token;
+    auto token = std::make_shared<Token>();
     token->col_num = col_num;
     token->line_num = line_num;
     token->stream = &stream;
@@ -101,9 +101,9 @@ Token* Lexer::get_operator() {
     return token;
 }
 
-Token* Lexer::get_numeric_literal() {
+std::shared_ptr<Token> Lexer::get_numeric_literal() {
 
-    Token* token = new Token;
+    auto token = std::make_shared<Token>();
     token->col_num = col_num;
     token->line_num = line_num;
     token->stream = &stream;
@@ -143,9 +143,9 @@ Token* Lexer::get_numeric_literal() {
     return token;
 }
 
-Token* Lexer::get_punctuation() {
+std::shared_ptr<Token> Lexer::get_punctuation() {
     
-    Token* token = new Token;
+    auto token = std::make_shared<Token>();
     token->col_num = col_num;
     token->line_num = line_num;
     token->stream = &stream;
@@ -169,9 +169,9 @@ Token* Lexer::get_punctuation() {
     return token;
 }
 
-Token* Lexer::get_string_literal() {
+std::shared_ptr<Token> Lexer::get_string_literal() {
 
-    Token* token = new Token;
+    auto token = std::make_shared<Token>();
     token->col_num = col_num;
     token->line_num = line_num;
     token->stream = &stream;
@@ -200,9 +200,9 @@ Token* Lexer::get_string_literal() {
 }
 
 
-std::deque<Token*> Lexer::tokenize_stream(std::string &stream)  {
+std::deque<std::shared_ptr<Token>> Lexer::tokenize_stream(std::string &stream)  {
     this->stream = stream;
-    std::deque<Token*> tokens;
+    std::deque<std::shared_ptr<Token>> tokens;
 
     while (!done()) {
 
@@ -246,12 +246,13 @@ std::deque<Token*> Lexer::tokenize_stream(std::string &stream)  {
         skip_whitespace();
     }
 
-    Token* eof_token = new Token;
+    auto eof_token = std::make_shared<Token>();
     eof_token->type = TOKEN_EOF;
     eof_token->string_value = "EOF";
     eof_token->stream = &stream;
     eof_token->col_num = col_num;
     eof_token->line_num = line_num;
+
     tokens.push_back(eof_token);
 
     return tokens;

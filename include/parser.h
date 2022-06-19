@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include "ast.h"
+#include "token.h"
 
 #define INDENT_WIDTH 4
 
@@ -12,13 +13,13 @@ class Parser {
         int indent_level;
 
         // Parsing functions
-        AST* parse_type_annotation(std::deque<Token*> &tokens, AST* parent);
-        AST* parse_function_decl(std::deque<Token*> &tokens, AST* parent);
-        AST* parse_let_stmt(std::deque<Token*> &tokens, AST* parent);
-        AST* parse_declaration(std::deque<Token*> &tokens, AST* parent);
-        AST* parse_expression(std::deque<Token*> &tokens, AST* parent);
+        std::shared_ptr<AST> parse_type_annotation(std::deque<std::shared_ptr<Token>> &tokens, std::shared_ptr<AST> parent);
+        std::shared_ptr<AST> parse_function_decl(std::deque<std::shared_ptr<Token>> &tokens, std::shared_ptr<AST> parent);
+        std::shared_ptr<AST> parse_let_stmt(std::deque<std::shared_ptr<Token>> &tokens, std::shared_ptr<AST> parent);
+        std::shared_ptr<AST> parse_declaration(std::deque<std::shared_ptr<Token>> &tokens, std::shared_ptr<AST> parent);
+        std::shared_ptr<AST> parse_expression(std::deque<std::shared_ptr<Token>> &tokens, std::shared_ptr<AST> parent);
 
     public:
         Parser();
-        AST* parse_tokens(std::deque<Token*> &tokens);
+        std::shared_ptr<AST> parse_tokens(std::deque<std::shared_ptr<Token>> &tokens);
 };

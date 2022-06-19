@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 #include "token.h"
 
 enum AST_Type {
@@ -22,7 +23,7 @@ struct AST {
     AST_Type type;
 
     // TODO: Maybe vector is too heavy-handed?
-    std::vector<AST*> children;
+    std::vector<std::shared_ptr<AST>> children;
 
     // We need something that lets us just send errors to the AST. One way to do
     // this is to attach an associated token to the AST. The problem is that
@@ -31,11 +32,16 @@ struct AST {
     // the AST.
     std::string string_value;
 
+    AST(AST_Type type) {
+        this->type = type;
+    }
+
+    AST(AST_Type type, std::string string_value) {
+        this->type = type;
+        this->string_value = string_value;
+    }
+
     void add_leaf_child(AST_Type type, std::string string_value) {
-        AST* child = new AST;
-        child->type = type;
-        child->string_value = string_value;
-        children.push_back(child);
+        children.push_back(std::make_shared<AST>(type, string_value));
     }
 };
-

@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <deque>
+#include <memory>
 
 #include "token.h"
 
@@ -34,16 +35,16 @@ class Lexer {
         void skip_whitespace();
         bool done();
 
-        Token* get_identifier_or_keyword();
-        Token* get_operator();
-        Token* get_numeric_literal();
-        Token* get_string_literal();
-        Token* get_punctuation();
-        Token* get_end_of_line();
+        std::shared_ptr<Token> get_identifier_or_keyword();
+        std::shared_ptr<Token> get_operator();
+        std::shared_ptr<Token> get_numeric_literal();
+        std::shared_ptr<Token> get_string_literal();
+        std::shared_ptr<Token> get_punctuation();
+        std::shared_ptr<Token> get_end_of_line();
 
     public:
         Lexer();
-        std::deque<Token*> tokenize_stream(std::string &stream);
+        std::deque<std::shared_ptr<Token>> tokenize_stream(std::string &stream);
 };
 
 

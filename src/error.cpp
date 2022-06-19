@@ -2,7 +2,7 @@
 #include <string.h>
 #include "error.h"
 
-void err_token(Token* token, std::string message) {
+void err_token(std::shared_ptr<Token> token, std::string message) {
     std::string stream = *(token->stream); // probably bad practice
     std::cout << "ERROR: line " << token->line_num << ", column " << token->col_num << std::endl;
 
