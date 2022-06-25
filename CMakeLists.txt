@@ -6,7 +6,7 @@ set (PROY stutter)
 project (${PROY} C CXX)
 
 # Compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -std=c++17 -Wall -Werror")
 
 include_directories (${PROJECT_SOURCE_DIR}/src)
 
@@ -18,6 +18,7 @@ set (STUTTER_SRC
     src/error.cpp
     src/analyzer.cpp
     src/bytecode.cpp
+    src/runtime.cpp
 )
 
 # Output folder

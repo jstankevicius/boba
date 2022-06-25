@@ -15,7 +15,6 @@ enum class InstructionType {
     SUB,
     MUL,
     DIV,
-    LOAD,
     STORE
 };
 
@@ -63,7 +62,6 @@ namespace bytecode {
     Instruction sub(int n_args);
     Instruction mul(int n_args);
     Instruction div();
-    Instruction load(std::shared_ptr<AST> ast);
     Instruction store(std::shared_ptr<AST> ast);
 }
 

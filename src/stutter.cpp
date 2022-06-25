@@ -6,6 +6,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "bytecode.h"
+#include "runtime.h"
 
 int main() 
 {
@@ -30,9 +31,12 @@ int main()
         std::cout << token->string_value << " ";
     }
     std::cout << std::endl;
-
+    std::cout << std::endl;
     std::cout << "Parsing:" << std::endl;
     auto ast = parser.parse_tokens(tokens);
     auto instructions = gen_bytecode(ast);
+    std::cout << std::endl;
     print_instructions(instructions);
+    Runtime runtime;
+    runtime.execute(instructions);
 }

@@ -107,10 +107,6 @@ void print_instructions(std::vector<Instruction> &instructions) {
             case InstructionType::DIV:
                 std::cout << "DIV " << std::endl;
                 break;
-            case InstructionType::LOAD:
-                std::cout << "LOAD ";
-                print_value(inst.value.value()); 
-                break;
             case InstructionType::STORE:
                 std::cout << "STORE ";
                 print_value(inst.value.value()); 
