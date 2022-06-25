@@ -38,3 +38,5 @@ CMakeFiles/
 bin/
 build/
 cmake_install.cmake
+generated-includes/
+_deps/

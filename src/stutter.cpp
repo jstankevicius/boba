@@ -5,6 +5,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "bytecode.h"
 
 int main() 
 {
@@ -25,11 +26,13 @@ int main()
     Parser parser;
     std::deque<std::shared_ptr<Token>> tokens = lexer.tokenize_stream(content);
     std::cout << "Tokens:" << std::endl;
-    for (auto token : tokens) {
+    for (auto& token : tokens) {
         std::cout << token->string_value << " ";
     }
     std::cout << std::endl;
 
     std::cout << "Parsing:" << std::endl;
-    parser.parse_tokens(tokens);
+    auto ast = parser.parse_tokens(tokens);
+    auto instructions = gen_bytecode(ast);
+    print_instructions(instructions);
 }

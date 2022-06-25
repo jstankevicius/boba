@@ -8,7 +8,6 @@
 #include "ast.h"
 #include "lexer.h"
 
-Parser::Parser() {}
 
 void show_ast(std::shared_ptr<AST> ast, int indent_level) {
     if (ast == NULL) return;
@@ -16,13 +15,14 @@ void show_ast(std::shared_ptr<AST> ast, int indent_level) {
     for (int i = 0; i < indent_level; i++) std::cout << "   ";
     std::cout << "AST(" << ast->string_value << ")" << std::endl;
 
-    for (std::shared_ptr<AST> child : ast->children) {
+    for (auto& child : ast->children) {
         show_ast(child, indent_level + 1);
     }
 }
 
-void expect_token_string(std::string str, std::deque<std::shared_ptr<Token>> &tokens) {
-    std::shared_ptr<Token> token = tokens.front();
+
+inline void expect_token_string(std::string str, std::deque<std::shared_ptr<Token>> &tokens) {
+    auto& token = tokens.front();
     if (token->string_value != str)
         err_token(token, "syntax error: expected '" + str + "', but got '"
             + token->string_value + "' ");
@@ -30,9 +30,10 @@ void expect_token_string(std::string str, std::deque<std::shared_ptr<Token>> &to
     tokens.pop_front();
 }
 
-void expect_token_type(Token_Type type, std::deque<std::shared_ptr<Token>> &tokens) {
+
+inline void expect_token_type(Token_Type type, std::deque<std::shared_ptr<Token>> &tokens) {
     assert(tokens.size() > 0);
-    std::shared_ptr<Token> token = tokens.front();
+    auto& token = tokens.front();
 
     if (tokens.front()->type != type) {
         switch (type) {
@@ -45,14 +46,15 @@ void expect_token_type(Token_Type type, std::deque<std::shared_ptr<Token>> &toke
     tokens.pop_front();
 }
 
+
 // parse_tokens
 // Parse a stream of tokens into an AST.
 std::shared_ptr<AST> Parser::parse_tokens(std::deque<std::shared_ptr<Token>> &tokens) {
 
-    std::shared_ptr<AST> root = std::make_shared<AST>(AST_ROOT, "");
+    auto root = std::make_shared<AST>(AST_ROOT, "");
 
     while (tokens.front()->type != TOKEN_EOF) {
-        root->children.push_back(parse_expression(tokens, root));
+        root->children.push_back(parse_expression(tokens));
     }
 
     show_ast(root, 0);
@@ -69,16 +71,16 @@ void check_valid_symbol(std::string symbol) {
 }
 */
 
-std::shared_ptr<AST> Parser::parse_expression(std::deque<std::shared_ptr<Token>> &tokens, std::shared_ptr<AST> parent) {
+std::shared_ptr<AST> Parser::parse_expression(std::deque<std::shared_ptr<Token>> &tokens) {
+    
     expect_token_string("(", tokens);
 
     auto ast = std::make_shared<AST>(AST_EXPR, tokens.front()->string_value);
     expect_token_type(TOKEN_SYMBOL, tokens);
     //check_valid_symbol(ast->string_value);
 
-    // TODO: maybe this could be cleaner?
     while (tokens.front()->type != TOKEN_EOF && tokens.front()->string_value != ")") {
-        auto front = tokens.front();
+        auto& front = tokens.front();
 
         if (front->type == TOKEN_SYMBOL) {
             ast->add_leaf_child(AST_SYMBOL, front->string_value);
@@ -97,7 +99,7 @@ std::shared_ptr<AST> Parser::parse_expression(std::deque<std::shared_ptr<Token>>
             expect_token_type(TOKEN_BOOL_LITERAL, tokens);
         } 
         else if (front->string_value == "(") {
-            ast->children.push_back(parse_expression(tokens, ast));
+            ast->children.push_back(parse_expression(tokens));
         } else {
             err_token(front, "internal parser error: unhandled token type");
         }

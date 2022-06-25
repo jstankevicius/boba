@@ -1,29 +1,35 @@
+include(FetchContent)
+
 cmake_minimum_required (VERSION 3.14)
 
 set (PROY stutter)
 project (${PROY} C CXX)
 
-# Source files folder
-set (SRC_DIR src)
-
-# Header files folder
-set (INCL_DIR include)
-
 # Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror")
 
-include_directories (${PROJECT_SOURCE_DIR}/${INCL_DIR})
+include_directories (${PROJECT_SOURCE_DIR}/src)
 
 
 set (STUTTER_SRC
-    ${SRC_DIR}/stutter.cpp
-    ${SRC_DIR}/lexer.cpp
-    ${SRC_DIR}/parser.cpp
-    ${SRC_DIR}/error.cpp
-    ${SRC_DIR}/analyzer.cpp
+    src/stutter.cpp
+    src/lexer.cpp
+    src/parser.cpp
+    src/error.cpp
+    src/analyzer.cpp
+    src/bytecode.cpp
 )
 
 # Output folder
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
+
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.0.1 # or a later release
+)
+
+FetchContent_MakeAvailable(Catch2)
+
 
 add_executable (stutter ${STUTTER_SRC})

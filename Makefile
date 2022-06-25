@@ -129,6 +129,32 @@ stutter/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/build
 .PHONY : stutter/fast
 
+#=============================================================================
+# Target rules for targets named Catch2
+
+# Build rule for target.
+Catch2: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Catch2
+.PHONY : Catch2
+
+# fast build rule for target.
+Catch2/fast:
+	$(MAKE) $(MAKESILENT) -f _deps/catch2-build/src/CMakeFiles/Catch2.dir/build.make _deps/catch2-build/src/CMakeFiles/Catch2.dir/build
+.PHONY : Catch2/fast
+
+#=============================================================================
+# Target rules for targets named Catch2WithMain
+
+# Build rule for target.
+Catch2WithMain: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 Catch2WithMain
+.PHONY : Catch2WithMain
+
+# fast build rule for target.
+Catch2WithMain/fast:
+	$(MAKE) $(MAKESILENT) -f _deps/catch2-build/src/CMakeFiles/Catch2WithMain.dir/build.make _deps/catch2-build/src/CMakeFiles/Catch2WithMain.dir/build
+.PHONY : Catch2WithMain/fast
+
 src/analyzer.o: src/analyzer.cpp.o
 .PHONY : src/analyzer.o
 
@@ -152,6 +178,30 @@ src/analyzer.s: src/analyzer.cpp.s
 src/analyzer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/analyzer.cpp.s
 .PHONY : src/analyzer.cpp.s
+
+src/bytecode.o: src/bytecode.cpp.o
+.PHONY : src/bytecode.o
+
+# target to build an object file
+src/bytecode.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/bytecode.cpp.o
+.PHONY : src/bytecode.cpp.o
+
+src/bytecode.i: src/bytecode.cpp.i
+.PHONY : src/bytecode.i
+
+# target to preprocess a source file
+src/bytecode.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/bytecode.cpp.i
+.PHONY : src/bytecode.cpp.i
+
+src/bytecode.s: src/bytecode.cpp.s
+.PHONY : src/bytecode.s
+
+# target to generate assembly for a file
+src/bytecode.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/stutter.dir/build.make CMakeFiles/stutter.dir/src/bytecode.cpp.s
+.PHONY : src/bytecode.cpp.s
 
 src/error.o: src/error.cpp.o
 .PHONY : src/error.o
@@ -257,10 +307,15 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... Catch2"
+	@echo "... Catch2WithMain"
 	@echo "... stutter"
 	@echo "... src/analyzer.o"
 	@echo "... src/analyzer.i"
 	@echo "... src/analyzer.s"
+	@echo "... src/bytecode.o"
+	@echo "... src/bytecode.i"
+	@echo "... src/bytecode.s"
 	@echo "... src/error.o"
 	@echo "... src/error.i"
 	@echo "... src/error.s"
