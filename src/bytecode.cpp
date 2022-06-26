@@ -1,5 +1,11 @@
 #include "bytecode.h"
 
+#include <iostream>
+#include <memory>
+#include <vector>
+
+#include "ast.h"
+
 namespace bytecode {
 
     // push always requires an argument, so it needs to take an AST node from
@@ -33,6 +39,13 @@ namespace bytecode {
         return inst;
     }
 
+    Instruction store(std::shared_ptr<AST> ast) {
+        assert(ast->type == AST_SYMBOL);
+        return Instruction(
+            InstructionType::STORE, 
+            make_value(ValueType::STRING, ast->string_value));
+    }
+
     Instruction add(int n_args) {
         Instruction inst(InstructionType::ADD);
         inst.value = make_value(ValueType::INT, n_args);
@@ -53,13 +66,6 @@ namespace bytecode {
 
     Instruction div() {
         return Instruction(InstructionType::DIV);
-    }
-
-    Instruction store(std::shared_ptr<AST> ast) {
-        assert(ast->type == AST_SYMBOL);
-        return Instruction(
-            InstructionType::STORE, 
-            make_value(ValueType::STRING, ast->string_value));
     }
 }
 

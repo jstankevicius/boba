@@ -24,14 +24,11 @@ private:
 public:
 
     inline void enter_scope();
-
     inline void exit_scope();
-
     inline void add_symbol(std::string name, Value &value);
-
     inline bool exists_symbol(std::string name);
 
     std::optional<Value> get_value(std::string name);
-
+    std::vector<Value> get_stack();
     void execute(std::vector<Instruction> &instructions);
 };

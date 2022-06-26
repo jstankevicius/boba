@@ -25,7 +25,7 @@ int main()
 
     Lexer lexer;
     Parser parser;
-    std::deque<std::shared_ptr<Token>> tokens = lexer.tokenize_stream(content);
+    auto tokens = lexer.tokenize_stream(content);
     std::cout << "Tokens:" << std::endl;
     for (auto& token : tokens) {
         std::cout << token->string_value << " ";

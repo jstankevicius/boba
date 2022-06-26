@@ -4,7 +4,7 @@
 #include <optional>
 
 inline bool Runtime::Scope::exists_symbol(std::string name) {
-    return symbols.count(name);
+    return symbols.count(name) > 0;
 }
 
 inline void Runtime::Scope::add_symbol(std::string name, Value &value) {
@@ -99,21 +99,21 @@ void Runtime::execute(std::vector<Instruction> &instructions) {
         // TODO: make this work for floats
         else if (type == InstructionType::MUL) {
             int n = std::any_cast<int>(inst.value.value().value);
-            int acc = std::any_cast<int>(stack.back().value);
+            int product = std::any_cast<int>(stack.back().value);
             stack.pop_back();
             for (int i = 1; i < n; i++) {
-                acc *= std::any_cast<int>(stack.back().value);
+                product *= std::any_cast<int>(stack.back().value);
                 stack.pop_back();
             }
-            stack.push_back(make_value(ValueType::INT, acc));
+            stack.push_back(make_value(ValueType::INT, product));
         }
 
         else if (type == InstructionType::DIV) {
             int divisor = std::any_cast<int>(stack.back().value);
             stack.pop_back();
-            int acc = std::any_cast<int>(stack.back().value) / divisor;
+            int quotient = std::any_cast<int>(stack.back().value) / divisor;
             stack.pop_back();
-            stack.push_back(make_value(ValueType::INT, acc));
+            stack.push_back(make_value(ValueType::INT, quotient));
         }
         ip++;
     }
