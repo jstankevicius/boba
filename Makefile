@@ -32,11 +32,12 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 # These files will have .d instead of .o as the output.
 CPPFLAGS := $(INC_FLAGS) -MMD -MP -std=c++17
 
-# The final build step.
+# Build the main binary.
 $(BUILD_DIR)/$(MAIN_BINARY): $(MAIN_OBJS)
 	mkdir -p $(dir $@)
 	$(CXX) $(MAIN_OBJS) -o $@ $(LDFLAGS)
 
+# Run the test binary, then delete it.
 test: $(BUILD_DIR)/$(TEST_BINARY)
 	$(BUILD_DIR)/$(TEST_BINARY)
 	rm $(BUILD_DIR)/$(TEST_BINARY)
@@ -48,9 +49,6 @@ $(BUILD_DIR)/$(TEST_BINARY): $(TEST_OBJS) $(MAIN_OBJS)
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
-
-#catch.hpp:
-#	wget https://raw.githubusercontent.com/catchorg/Catch2/v2.x/single_include/catch2/catch.hpp
 
 .PHONY: clean
 clean:
