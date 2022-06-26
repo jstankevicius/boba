@@ -1,23 +1,31 @@
-TARGET_EXEC := stutter
+# This Makefile is a modified version of the one found on
+# https://makefiletutorial.com.
 
-BUILD_DIR := ./build
-SRC_DIRS := ./src
+MAIN_BINARY := stutter
+TEST_BINARY := run_tests
 
-# Find all the C and C++ files we want to compile
-# Note the single quotes around the * expressions. Make will incorrectly expand these otherwise.
-SRCS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.c' -or -name '*.s')
+BUILD_DIR   := ./build
+TEST_DIR    := ./tests
+SRC_DIR     := ./src
+
+MAIN_SRC    := $(shell find $(SRC_DIR) -name '*.cpp')
+TESTS_SRC   := $(shell find $(TEST_DIR) -name '*.cpp')
 
 # String substitution for every C/C++ file.
 # As an example, hello.cpp turns into ./build/hello.cpp.o
-OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+MAIN_OBJS   := $(MAIN_SRC:%=$(BUILD_DIR)/%.o)
+
+# Exclude the cpp file with main() so that Catch2 can provide its own.
+# This also assumes that the file is named after the binary that is eventually
+# produced.
+TEST_OBJS   := $(filter-out $(BUILD_DIR)/$(SRC_DIR)/$(MAIN_BINARY).cpp.o, $(MAIN_OBJS))
+TEST_OBJS   := $(TEST_OBJS) $(TESTS_SRC:%=$(BUILD_DIR)/%.o)
 
 # String substitution (suffix version without %).
 # As an example, ./build/hello.cpp.o turns into ./build/hello.cpp.d
-DEPS := $(OBJS:.o=.d)
+DEPS := $(MAIN_OBJS:.o=.d)
 
-# Every folder in ./src will need to be passed to GCC so that it can find header files
-INC_DIRS := $(shell find $(SRC_DIRS) -type d)
-# Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
+INC_DIRS := $(shell find $(SRC_DIR) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 # The -MMD and -MP flags together generate Makefiles for us!
@@ -25,14 +33,24 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CPPFLAGS := $(INC_FLAGS) -MMD -MP -std=c++17
 
 # The final build step.
-$(TARGET_EXEC): $(OBJS)
-	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+$(BUILD_DIR)/$(MAIN_BINARY): $(MAIN_OBJS)
+	mkdir -p $(dir $@)
+	$(CXX) $(MAIN_OBJS) -o $@ $(LDFLAGS)
+
+test: $(BUILD_DIR)/$(TEST_BINARY)
+	$(BUILD_DIR)/$(TEST_BINARY)
+	rm $(BUILD_DIR)/$(TEST_BINARY)
+
+$(BUILD_DIR)/$(TEST_BINARY): $(TEST_OBJS) $(MAIN_OBJS)
+	$(CXX) $(TEST_OBJS) -o $@ $(LDFLAGS)
 
 # Build step for C++ source
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
+#catch.hpp:
+#	wget https://raw.githubusercontent.com/catchorg/Catch2/v2.x/single_include/catch2/catch.hpp
 
 .PHONY: clean
 clean:

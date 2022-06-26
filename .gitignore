@@ -32,11 +32,4 @@
 *.app
 
 # Other project stuff
-.vscode
-CMakeCache.txt
-CMakeFiles/
-bin/
 build/
-cmake_install.cmake
-generated-includes/
-_deps/
