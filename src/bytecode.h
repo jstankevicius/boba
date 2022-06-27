@@ -31,6 +31,22 @@ enum class ValueType {
 struct Value {
     ValueType type;
     std::any value;
+
+    inline int get_int() {
+        return std::any_cast<int>(value);
+    }
+
+    inline double get_float() {
+        return std::any_cast<double>(value);
+    }
+
+    inline std::string get_str() {
+        return std::any_cast<std::string>(value);
+    }
+
+    inline bool get_bool() {
+        return std::any_cast<bool>(value);
+    }
 };
 
 template <typename T>
@@ -43,7 +59,7 @@ Value make_value(ValueType type, T val) {
 
 struct Instruction {
     InstructionType inst_type;
-    std::optional<Value> value;
+    std::optional<Value> inst_value;;
 
     Instruction(InstructionType inst_type) {
         this->inst_type = inst_type;
@@ -51,7 +67,27 @@ struct Instruction {
 
     Instruction(InstructionType inst_type, Value value) {
         this->inst_type = inst_type;
-        this->value = value;
+        this->inst_value = value;
+    }
+
+    inline ValueType get_value_type() {
+        return inst_value.value().type;
+    }
+
+    inline int get_int_value() {
+        return inst_value.value().get_int();
+    }
+
+    inline double get_float_value() {
+        return inst_value.value().get_float();
+    }
+
+    inline bool get_bool_value() {
+        return inst_value.value().get_bool();
+    }
+
+    inline std::string get_str_value() {
+        return inst_value.value().get_str();
     }
 };
 

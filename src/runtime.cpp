@@ -49,27 +49,25 @@ void Runtime::execute(std::vector<Instruction> &instructions) {
         InstructionType type = inst.inst_type;
 
         if (type == InstructionType::PUSH) {
-            if (inst.value.value().type == ValueType::SYMBOL) {
-                auto name = std::any_cast<std::string>(inst.value.value().value);
+            if (inst.get_value_type() == ValueType::SYMBOL) {
+                auto name = inst.get_str_value();
                 stack.push_back(scopes.back().symbols[name]);   
             } 
             else {
-                stack.push_back(inst.value.value());    
+                stack.push_back(inst.inst_value.value());    
             }
         }
         else if (type == InstructionType::STORE) {
-            add_symbol(
-                std::any_cast<std::string>(inst.value.value().value), 
-                stack.back());
+            add_symbol(inst.get_str_value(), stack.back());
             stack.pop_back();
         }
 
         // TODO: make this work for floats and maybe strings
         else if (type == InstructionType::ADD) {
-            int n = std::any_cast<int>(inst.value.value().value);
+            int n = inst.get_int_value();
             int acc = 0;
             for (int i = 0; i < n; i++) {
-                acc += std::any_cast<int>(stack.back().value);
+                acc += stack.back().get_int();
                 stack.pop_back();
             }
             stack.push_back(make_value(ValueType::INT, acc));
@@ -77,19 +75,19 @@ void Runtime::execute(std::vector<Instruction> &instructions) {
 
         // TODO: make this work for floats
         else if (type == InstructionType::SUB) {
-            int n = std::any_cast<int>(inst.value.value().value);
+            int n = inst.get_int_value();
             int acc = 0;
 
             // unary negation
             if (n == 1) {
-                acc -= std::any_cast<int>(stack.back().value);
+                acc -= stack.back().get_int();
                 stack.pop_back();
                 stack.push_back(make_value(ValueType::INT, acc));
             }
             else if (n == 2) {
-                acc = std::any_cast<int>(stack.back().value);
+                acc = stack.back().get_int();
                 stack.pop_back();
-                acc -= std::any_cast<int>(stack.back().value);
+                acc -= stack.back().get_int();
                 acc *= -1;
                 stack.pop_back();
                 stack.push_back(make_value(ValueType::INT, acc));
@@ -98,20 +96,20 @@ void Runtime::execute(std::vector<Instruction> &instructions) {
 
         // TODO: make this work for floats
         else if (type == InstructionType::MUL) {
-            int n = std::any_cast<int>(inst.value.value().value);
-            int product = std::any_cast<int>(stack.back().value);
+            int n = inst.get_int_value();
+            int product = stack.back().get_int();
             stack.pop_back();
             for (int i = 1; i < n; i++) {
-                product *= std::any_cast<int>(stack.back().value);
+                product *= stack.back().get_int();
                 stack.pop_back();
             }
             stack.push_back(make_value(ValueType::INT, product));
         }
 
         else if (type == InstructionType::DIV) {
-            int divisor = std::any_cast<int>(stack.back().value);
+            int divisor = stack.back().get_int();
             stack.pop_back();
-            int quotient = std::any_cast<int>(stack.back().value) / divisor;
+            int quotient = stack.back().get_int() / divisor;
             stack.pop_back();
             stack.push_back(make_value(ValueType::INT, quotient));
         }

@@ -17,21 +17,21 @@ namespace bytecode {
 
         switch (ast->type) {
             case AST_STR_LITERAL:
-                inst.value = make_value(ValueType::STRING, s);
+                inst.inst_value = make_value(ValueType::STRING, s);
                 break;
             case AST_INT_LITERAL:
-                inst.value = make_value(ValueType::INT, std::stoi(s));
+                inst.inst_value = make_value(ValueType::INT, std::stoi(s));
                 break;
             case AST_FLOAT_LITERAL:
-                inst.value = make_value(ValueType::FLOAT, std::stof(s));
+                inst.inst_value = make_value(ValueType::FLOAT, std::stof(s));
                 break;
             case AST_BOOL_LITERAL:
                 // The string value is guaranteed to be either "true" or "false"
                 // by the parser.
-                inst.value = make_value(ValueType::BOOL, s == "true");
+                inst.inst_value = make_value(ValueType::BOOL, s == "true");
                 break;
             case AST_SYMBOL:
-                inst.value = make_value(ValueType::SYMBOL, s);
+                inst.inst_value = make_value(ValueType::SYMBOL, s);
                 break;  
             default:
                 break;
@@ -48,19 +48,19 @@ namespace bytecode {
 
     Instruction add(int n_args) {
         Instruction inst(InstructionType::ADD);
-        inst.value = make_value(ValueType::INT, n_args);
+        inst.inst_value = make_value(ValueType::INT, n_args);
         return inst;
     }
 
     Instruction sub(int n_args) {
         Instruction inst(InstructionType::SUB);
-        inst.value = make_value(ValueType::INT, n_args);
+        inst.inst_value = make_value(ValueType::INT, n_args);
         return inst;
     }
 
     Instruction mul(int n_args) {
         Instruction inst(InstructionType::MUL);
-        inst.value = make_value(ValueType::INT, n_args);
+        inst.inst_value = make_value(ValueType::INT, n_args);
         return inst;
     }
 
@@ -96,26 +96,26 @@ void print_instructions(std::vector<Instruction> &instructions) {
         switch (inst.inst_type) {
             case InstructionType::PUSH:
                 std::cout << "PUSH ";
-                print_value(inst.value.value()); 
+                print_value(inst.inst_value.value()); 
                 break;
             case InstructionType::ADD:
                 std::cout << "ADD ";
-                print_value(inst.value.value()); 
+                print_value(inst.inst_value.value()); 
                 break;
             case InstructionType::SUB:
                 std::cout << "SUB ";
-                print_value(inst.value.value()); 
+                print_value(inst.inst_value.value()); 
                 break;
             case InstructionType::MUL:
                 std::cout << "MUL ";
-                print_value(inst.value.value()); 
+                print_value(inst.inst_value.value()); 
                 break;
             case InstructionType::DIV:
                 std::cout << "DIV " << std::endl;
                 break;
             case InstructionType::STORE:
                 std::cout << "STORE ";
-                print_value(inst.value.value()); 
+                print_value(inst.inst_value.value()); 
                 break;
             default:
                 std::cout << "unknown instruction type" << std::endl;
