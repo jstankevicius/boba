@@ -8,11 +8,15 @@
 #include "bytecode.h"
 #include "runtime.h"
 
-int main() 
+int main(int argc, char *argv[])
 {
+    if (argc < 2) {
+        std::cerr << "Error: no input file" << std::endl;
+        exit(EXIT_FAILURE);
+    }
     std::ifstream file;
 
-    file.open("file.stt");
+    file.open(argv[1]);
 
     if (!file.is_open()) 
     {
