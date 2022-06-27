@@ -41,6 +41,10 @@ std::optional<Value> Runtime::get_value(std::string name) {
     return {};
 }
 
+std::vector<Value> Runtime::get_stack() {
+    return stack;
+}
+
 void Runtime::execute(std::vector<Instruction> &instructions) {
     int ip = 0;
     enter_scope();
@@ -115,6 +119,4 @@ void Runtime::execute(std::vector<Instruction> &instructions) {
         }
         ip++;
     }
-    std::cout << std::endl;
-    std::cout << "Result: " << std::any_cast<int>(stack.back().value) << std::endl;
 }

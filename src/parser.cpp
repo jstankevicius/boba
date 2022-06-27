@@ -57,7 +57,6 @@ std::shared_ptr<AST> Parser::parse_tokens(std::deque<std::shared_ptr<Token>> &to
         root->children.push_back(parse_expression(tokens));
     }
 
-    show_ast(root, 0);
     return root;
 }
 
