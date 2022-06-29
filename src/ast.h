@@ -4,23 +4,22 @@
 #include <memory>
 #include "token.h"
 
-enum AST_Type {
-    // TODO: better names for this stuff
-    AST_ROOT,
+enum class ASTType {
+    ROOT,
 
-    AST_EXPR, // implicit grouping of parentheses
+    EXPR, // implicit grouping of parentheses
 
-    AST_SYMBOL,
+    SYMBOL,
 
     // Literals
-    AST_INT_LITERAL,
-    AST_FLOAT_LITERAL,
-    AST_STR_LITERAL,
-    AST_BOOL_LITERAL,
+    INT_LITERAL,
+    FLOAT_LITERAL,
+    STR_LITERAL,
+    BOOL_LITERAL,
 };
 
 struct AST {
-    AST_Type type;
+    ASTType type;
 
     // TODO: Maybe vector is too heavy-handed?
     std::vector<std::shared_ptr<AST>> children;
@@ -32,16 +31,16 @@ struct AST {
     // the AST.
     std::string string_value;
 
-    AST(AST_Type type) {
+    AST(ASTType type) {
         this->type = type;
     }
 
-    AST(AST_Type type, std::string string_value) {
+    AST(ASTType type, std::string string_value) {
         this->type = type;
         this->string_value = string_value;
     }
 
-    void add_leaf_child(AST_Type type, std::string string_value) {
+   inline  void add_leaf_child(ASTType type, std::string string_value) {
         children.push_back(std::make_shared<AST>(type, string_value));
     }
 };

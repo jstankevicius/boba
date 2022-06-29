@@ -31,13 +31,13 @@ inline void expect_token_string(std::string str, std::deque<std::shared_ptr<Toke
 }
 
 
-inline void expect_token_type(Token_Type type, std::deque<std::shared_ptr<Token>> &tokens) {
+inline void expect_token_type(TokenType type, std::deque<std::shared_ptr<Token>> &tokens) {
     assert(tokens.size() > 0);
     auto& token = tokens.front();
 
     if (tokens.front()->type != type) {
         switch (type) {
-            case TOKEN_SYMBOL:
+            case TokenType::SYMBOL:
                 err_token(token, "expected a symbol");
             default:
                 err_token(token, "internal parser error: unhandled token type!");
@@ -51,9 +51,9 @@ inline void expect_token_type(Token_Type type, std::deque<std::shared_ptr<Token>
 // Parse a stream of tokens into an AST.
 std::shared_ptr<AST> Parser::parse_tokens(std::deque<std::shared_ptr<Token>> &tokens) {
 
-    auto root = std::make_shared<AST>(AST_ROOT, "");
+    auto root = std::make_shared<AST>(ASTType::ROOT, "");
 
-    while (tokens.front()->type != TOKEN_EOF) {
+    while (tokens.front()->type != TokenType::_EOF) {
         root->children.push_back(parse_expression(tokens));
     }
 
@@ -74,28 +74,28 @@ std::shared_ptr<AST> Parser::parse_expression(std::deque<std::shared_ptr<Token>>
     
     expect_token_string("(", tokens);
 
-    auto ast = std::make_shared<AST>(AST_EXPR, tokens.front()->string_value);
-    expect_token_type(TOKEN_SYMBOL, tokens);
+    auto ast = std::make_shared<AST>(ASTType::EXPR, tokens.front()->string_value);
+    expect_token_type(TokenType::SYMBOL, tokens);
     //check_valid_symbol(ast->string_value);
 
-    while (tokens.front()->type != TOKEN_EOF && tokens.front()->string_value != ")") {
+    while (tokens.front()->type != TokenType::_EOF && tokens.front()->string_value != ")") {
         auto& front = tokens.front();
 
-        if (front->type == TOKEN_SYMBOL) {
-            ast->add_leaf_child(AST_SYMBOL, front->string_value);
-            expect_token_type(TOKEN_SYMBOL, tokens);
-        } else if (front->type == TOKEN_STR_LITERAL) {
-            ast->add_leaf_child(AST_STR_LITERAL, front->string_value);
-            expect_token_type(TOKEN_STR_LITERAL, tokens);
-        } else if (front->type == TOKEN_INT_LITERAL) {
-            ast->add_leaf_child(AST_INT_LITERAL, front->string_value);
-            expect_token_type(TOKEN_INT_LITERAL, tokens);
-        } else if (front->type == TOKEN_FLOAT_LITERAL) {
-            ast->add_leaf_child(AST_FLOAT_LITERAL, front->string_value);
-            expect_token_type(TOKEN_FLOAT_LITERAL, tokens);
-        } else if (front->type == TOKEN_BOOL_LITERAL) {
-            ast->add_leaf_child(AST_BOOL_LITERAL, front->string_value);
-            expect_token_type(TOKEN_BOOL_LITERAL, tokens);
+        if (front->type == TokenType::SYMBOL) {
+            ast->add_leaf_child(ASTType::SYMBOL, front->string_value);
+            expect_token_type(TokenType::SYMBOL, tokens);
+        } else if (front->type == TokenType::STR_LITERAL) {
+            ast->add_leaf_child(ASTType::STR_LITERAL, front->string_value);
+            expect_token_type(TokenType::STR_LITERAL, tokens);
+        } else if (front->type == TokenType::INT_LITERAL) {
+            ast->add_leaf_child(ASTType::INT_LITERAL, front->string_value);
+            expect_token_type(TokenType::INT_LITERAL, tokens);
+        } else if (front->type == TokenType::FLOAT_LITERAL) {
+            ast->add_leaf_child(ASTType::FLOAT_LITERAL, front->string_value);
+            expect_token_type(TokenType::FLOAT_LITERAL, tokens);
+        } else if (front->type == TokenType::BOOL_LITERAL) {
+            ast->add_leaf_child(ASTType::BOOL_LITERAL, front->string_value);
+            expect_token_type(TokenType::BOOL_LITERAL, tokens);
         } 
         else if (front->string_value == "(") {
             ast->children.push_back(parse_expression(tokens));

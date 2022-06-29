@@ -16,21 +16,21 @@ namespace bytecode {
         std::string s = ast->string_value;
 
         switch (ast->type) {
-            case AST_STR_LITERAL:
+            case ASTType::STR_LITERAL:
                 inst.inst_value = make_value(ValueType::STRING, s);
                 break;
-            case AST_INT_LITERAL:
+            case ASTType::INT_LITERAL:
                 inst.inst_value = make_value(ValueType::INT, std::stoi(s));
                 break;
-            case AST_FLOAT_LITERAL:
+            case ASTType::FLOAT_LITERAL:
                 inst.inst_value = make_value(ValueType::FLOAT, std::stof(s));
                 break;
-            case AST_BOOL_LITERAL:
+            case ASTType::BOOL_LITERAL:
                 // The string value is guaranteed to be either "true" or "false"
                 // by the parser.
                 inst.inst_value = make_value(ValueType::BOOL, s == "true");
                 break;
-            case AST_SYMBOL:
+            case ASTType::SYMBOL:
                 inst.inst_value = make_value(ValueType::SYMBOL, s);
                 break;  
             default:
@@ -40,7 +40,7 @@ namespace bytecode {
     }
 
     Instruction store(std::shared_ptr<AST> ast) {
-        assert(ast->type == AST_SYMBOL);
+        assert(ast->type == ASTType::SYMBOL);
         return Instruction(
             InstructionType::STORE, 
             make_value(ValueType::STRING, ast->string_value));
@@ -131,7 +131,7 @@ void emit_expr(
 
     for (auto& child : root->children) {
 
-        if (child->type == AST_EXPR)
+        if (child->type == ASTType::EXPR)
             emit_expr(child, instructions);
         else
             instructions.push_back(bytecode::push(child));
@@ -158,7 +158,7 @@ void emit_def(
     auto& left = root->children[0];
     auto& right = root->children[1];
 
-    if (right->type == AST_EXPR)
+    if (right->type == ASTType::EXPR)
         emit_expr(right, instructions);
     else
         instructions.push_back(bytecode::push(right));

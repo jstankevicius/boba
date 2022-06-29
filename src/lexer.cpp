@@ -77,7 +77,7 @@ std::shared_ptr<Token> Lexer::get_identifier_or_keyword()  {
 
     // TODO: formatting?
     token->type = (str == "true" || str == "false") ? 
-                  TOKEN_BOOL_LITERAL : TOKEN_SYMBOL;
+                  TokenType::BOOL_LITERAL : TokenType::SYMBOL;
 
     return token;
 }
@@ -96,7 +96,7 @@ std::shared_ptr<Token> Lexer::get_operator() {
     }
 
     token->string_value = op;
-    token->type = TOKEN_SYMBOL;
+    token->type = TokenType::SYMBOL;
 
     return token;
 }
@@ -138,7 +138,7 @@ std::shared_ptr<Token> Lexer::get_numeric_literal() {
         advance_char();
     }
     token->string_value = num_literal;
-    token->type = is_float_literal ? TOKEN_FLOAT_LITERAL : TOKEN_INT_LITERAL;
+    token->type = is_float_literal ? TokenType::FLOAT_LITERAL : TokenType::INT_LITERAL;
 
     return token;
 }
@@ -150,7 +150,7 @@ std::shared_ptr<Token> Lexer::get_punctuation() {
     token->line_num = line_num;
     token->stream = &stream;
     token->string_value += cur_char();
-    token->type = TOKEN_PUNCTUATION;
+    token->type = TokenType::PUNCTUATION;
 
     switch (cur_char()) {
         case '(':
@@ -194,7 +194,7 @@ std::shared_ptr<Token> Lexer::get_string_literal() {
         err_token(token, "no matching quote");
     }
 
-    token->type = TOKEN_STR_LITERAL;;
+    token->type = TokenType::STR_LITERAL;;
     token->string_value = str_literal;
     return token;
 }
@@ -247,7 +247,7 @@ std::deque<std::shared_ptr<Token>> Lexer::tokenize_stream(std::string &stream)  
     }
 
     auto eof_token = std::make_shared<Token>();
-    eof_token->type = TOKEN_EOF;
+    eof_token->type = TokenType::_EOF;
     eof_token->string_value = "EOF";
     eof_token->stream = &stream;
     eof_token->col_num = col_num;

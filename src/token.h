@@ -3,25 +3,25 @@
 #include <string>
 #include <memory>
 
-enum Token_Type {
+enum class TokenType {
 
-    TOKEN_ERROR,
+    ERROR,
 
     // Anything that isn't a literal - can be a function name, identifier, or
     // a non-alphanumeric symbol like >=.
 
     // End of file
-    TOKEN_EOF,
+    _EOF,
 
-    TOKEN_PUNCTUATION,
+    PUNCTUATION,
 
-    TOKEN_SYMBOL,
+    SYMBOL,
 
     // Literals
-    TOKEN_INT_LITERAL,
-    TOKEN_FLOAT_LITERAL,
-    TOKEN_STR_LITERAL,
-    TOKEN_BOOL_LITERAL,
+    INT_LITERAL,
+    FLOAT_LITERAL,
+    STR_LITERAL,
+    BOOL_LITERAL,
 };
 
 
@@ -38,7 +38,7 @@ struct Token {
     // this file.
     std::string* stream;
 
-    Token_Type type;
+    TokenType type;
 
     // TODO: more types eventually?
     std::string string_value;
