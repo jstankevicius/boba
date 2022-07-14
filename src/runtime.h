@@ -92,8 +92,8 @@ private:
 public:
 
     Runtime() {
-	envs.push_back(Environment());
-	std::memset(instructions, 0, 1024);
+        envs.push_back(Environment());
+        std::memset(instructions, 0, 1024);
     }
     
     void eval_ast(std::shared_ptr<AST> ast);

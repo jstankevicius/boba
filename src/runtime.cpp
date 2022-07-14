@@ -40,10 +40,10 @@ void Runtime::emit_push(std::shared_ptr<AST> ast) {
     assert(ast->children.size() == 0);
     switch (ast->type) {
     case ASTType::INT_LITERAL:
-	emit_push_int(std::stoi(ast->string_value));
-	break;
+        emit_push_int(std::stoi(ast->string_value));
+        break;
     default:
-	break;
+        break;
     }
 
 }
@@ -54,10 +54,10 @@ void Runtime::emit_expr(std::shared_ptr<AST> ast) {
 
     // First, add all the operands to the stack:
     for (auto& child : ast->children) {
-	if (child->type == ASTType::EXPR)
-	     emit_expr(child);
-	else
-	    emit_push(child);
+        if (child->type == ASTType::EXPR)
+             emit_expr(child);
+        else
+            emit_push(child);
     }
 
     const std::string ast_val = ast->string_value;
@@ -66,31 +66,31 @@ void Runtime::emit_expr(std::shared_ptr<AST> ast) {
     // cases of function calls. It'll also need to work on stuff like floats.
 
     if (ast_val == "+") {
-	mem_put<Instruction>(Instruction::ADD_I, instructions + write_offset);
-	write_offset += sizeof(unsigned char);
+        mem_put<Instruction>(Instruction::ADD_I, instructions + write_offset);
+        write_offset += sizeof(unsigned char);
     }
 
     else if (ast_val == "-") {
-	if (ast->children.size() == 1) {
-	    mem_put<Instruction>(Instruction::NEG_I, instructions + write_offset);
-	    write_offset += sizeof(unsigned char);
-	}
+        if (ast->children.size() == 1) {
+            mem_put<Instruction>(Instruction::NEG_I, instructions + write_offset);
+            write_offset += sizeof(unsigned char);
+        }
 
-	else {
-	    mem_put<Instruction>(Instruction::SUB_I, instructions + write_offset);
-	    write_offset += sizeof(unsigned char);
-	}
+        else {
+            mem_put<Instruction>(Instruction::SUB_I, instructions + write_offset);
+            write_offset += sizeof(unsigned char);
+        }
     }
 
 
     else if (ast_val == "*") {
-	mem_put<Instruction>(Instruction::MUL_I, instructions + write_offset);
-	write_offset += sizeof(unsigned char);
+        mem_put<Instruction>(Instruction::MUL_I, instructions + write_offset);
+        write_offset += sizeof(unsigned char);
     }
 
     else if (ast_val == "/") {
-	mem_put<Instruction>(Instruction::DIV_I, instructions + write_offset);
-	write_offset += sizeof(unsigned char);
+        mem_put<Instruction>(Instruction::DIV_I, instructions + write_offset);
+        write_offset += sizeof(unsigned char);
     }
 }
 
@@ -102,17 +102,17 @@ void Runtime::eval_ast(std::shared_ptr<AST> ast) {
     //std::cout << "eval_ast" << std::endl;
     // Determine the type of AST we're evaluating.
     if (ast->string_value == "def") {
-	emit_def(ast);
+        emit_def(ast);
     }
 
     // For now, everything that isn't a def will just be assumed to be
     // an arithmetic expression. We'll need to start handling defuns soon.
     else {
-	emit_expr(ast);
+        emit_expr(ast);
     }
 
     for (int i = 0; i < 1024; i++) {
-	printf("%x ", instructions[i]);
+        printf("%x ", instructions[i]);
     }
     printf("\n");
 }

@@ -10,7 +10,7 @@ struct Value {
     std::any value;
 
     template <typename T> inline T as() {
-	return std::any_cast<T>(value);
+        return std::any_cast<T>(value);
     }
 };
 
@@ -22,7 +22,7 @@ private:
     std::unordered_map<int, Value> memory;
 
     
-	
+        
 public:
     
 };
