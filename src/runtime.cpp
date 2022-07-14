@@ -1,122 +1,118 @@
 #include "runtime.h"
-#include <unordered_map>
-#include <vector>
-#include <optional>
 
-inline bool Runtime::Scope::exists_symbol(std::string name) {
-    return symbols.count(name) > 0;
+#include <iostream>
+#include <math.h>
+
+#include "bytecode.h"
+
+template <typename T>
+inline void mem_put(T value, unsigned char* arr) {
+    std::memcpy(arr, &value, sizeof(T));
 }
 
-inline void Runtime::Scope::add_symbol(std::string name, Value &value) {
-    symbols.emplace(name, value);
+template <typename T>
+inline T mem_get(unsigned char* arr) {
+    T value;
+    std::memcpy(&value, arr, sizeof(T));
+    return value;
 }
 
-inline void Runtime::enter_scope() {
-    scopes.push_back(Scope());
+
+// Relative emit - emits an int exactly at write_offset, then
+// advances write_offset.
+inline void Runtime::emit_push_int(int i) {
+
+    // For now, we'll actually only consider one size. It may be useful down
+    // the line to break up push_i into a push_i where the arguments are
+    // different sizes to save space. Right now we have a lot of empty bytes
+    // in the instruction buffer.
+
+    mem_put<Instruction>(Instruction::PUSH_I, instructions + write_offset);
+    write_offset += sizeof(unsigned char);
+
+    mem_put<int>(i, instructions + write_offset);
+    write_offset += sizeof(int);
+
 }
 
-inline void Runtime::exit_scope() {
-    assert(scopes.size() > 0);
-    scopes.pop_back();
-}
 
-inline void Runtime::add_symbol(std::string name, Value &value) {
-    scopes.back().add_symbol(name, value);
-};
-
-inline bool Runtime::exists_symbol(std::string name) {
-    for (int i = scopes.size() - 1; i --> 0;)
-        if (scopes[i].exists_symbol(name))
-            return true;
-    
-    return false;
-}
-
-std::optional<Value> Runtime::get_value(std::string name) {
-
-    for (int i = scopes.size() - 1; i --> 0;)
-        if (scopes[i].exists_symbol(name))
-            return scopes[i].symbols[name];
-
-    return {};
-}
-
-std::vector<Value> Runtime::get_stack() {
-    return stack;
-}
-
-void Runtime::execute(std::vector<Instruction> &instructions) {
-    int ip = 0;
-    enter_scope();
-    while (ip < instructions.size()) {
-        auto& inst = instructions[ip];
-        InstructionType type = inst.inst_type;
-
-        if (type == InstructionType::PUSH) {
-            if (inst.get_value_type() == ValueType::SYMBOL) {
-                auto name = inst.get_str_value();
-                stack.push_back(scopes.back().symbols[name]);   
-            } 
-            else {
-                stack.push_back(inst.inst_value.value());    
-            }
-        }
-        else if (type == InstructionType::STORE) {
-            add_symbol(inst.get_str_value(), stack.back());
-            stack.pop_back();
-        }
-
-        // TODO: make this work for floats and maybe strings
-        else if (type == InstructionType::ADD) {
-            int n = inst.get_int_value();
-            int acc = 0;
-            for (int i = 0; i < n; i++) {
-                acc += stack.back().get_int();
-                stack.pop_back();
-            }
-            stack.push_back(make_value(ValueType::INT, acc));
-        }
-
-        // TODO: make this work for floats
-        else if (type == InstructionType::SUB) {
-            int n = inst.get_int_value();
-            int acc = 0;
-
-            // unary negation
-            if (n == 1) {
-                acc -= stack.back().get_int();
-                stack.pop_back();
-                stack.push_back(make_value(ValueType::INT, acc));
-            }
-            else if (n == 2) {
-                acc = stack.back().get_int();
-                stack.pop_back();
-                acc -= stack.back().get_int();
-                acc *= -1;
-                stack.pop_back();
-                stack.push_back(make_value(ValueType::INT, acc));
-            }
-        }
-
-        // TODO: make this work for floats
-        else if (type == InstructionType::MUL) {
-            int n = inst.get_int_value();
-            int product = stack.back().get_int();
-            stack.pop_back();
-            for (int i = 1; i < n; i++) {
-                product *= stack.back().get_int();
-                stack.pop_back();
-            }
-            stack.push_back(make_value(ValueType::INT, product));
-        }
-
-        else if (type == InstructionType::DIV) {
-            int divisor = stack.back().get_int();
-            stack.pop_back();
-            int quotient = stack.back().get_int() / divisor;
-            stack.pop_back();
-            stack.push_back(make_value(ValueType::INT, quotient));
-        }
-        ip++;
+void Runtime::emit_push(std::shared_ptr<AST> ast) {
+    assert(ast->children.size() == 0);
+    switch (ast->type) {
+    case ASTType::INT_LITERAL:
+	emit_push_int(std::stoi(ast->string_value));
+	break;
+    default:
+	break;
     }
+
+}
+
+
+// Emit an "expression" (a function call).
+void Runtime::emit_expr(std::shared_ptr<AST> ast) {
+
+    // First, add all the operands to the stack:
+    for (auto& child : ast->children) {
+	if (child->type == ASTType::EXPR)
+	     emit_expr(child);
+	else
+	    emit_push(child);
+    }
+
+    const std::string ast_val = ast->string_value;
+
+    // TODO: make this more robust. We'll need to handle a lot more
+    // cases of function calls. It'll also need to work on stuff like floats.
+
+    if (ast_val == "+") {
+	mem_put<Instruction>(Instruction::ADD_I, instructions + write_offset);
+	write_offset += sizeof(unsigned char);
+    }
+
+    else if (ast_val == "-") {
+	if (ast->children.size() == 1) {
+	    mem_put<Instruction>(Instruction::NEG_I, instructions + write_offset);
+	    write_offset += sizeof(unsigned char);
+	}
+
+	else {
+	    mem_put<Instruction>(Instruction::SUB_I, instructions + write_offset);
+	    write_offset += sizeof(unsigned char);
+	}
+    }
+
+
+    else if (ast_val == "*") {
+	mem_put<Instruction>(Instruction::MUL_I, instructions + write_offset);
+	write_offset += sizeof(unsigned char);
+    }
+
+    else if (ast_val == "/") {
+	mem_put<Instruction>(Instruction::DIV_I, instructions + write_offset);
+	write_offset += sizeof(unsigned char);
+    }
+}
+
+void Runtime::emit_def(std::shared_ptr<AST> ast) {
+
+}
+
+void Runtime::eval_ast(std::shared_ptr<AST> ast) {
+    //std::cout << "eval_ast" << std::endl;
+    // Determine the type of AST we're evaluating.
+    if (ast->string_value == "def") {
+	emit_def(ast);
+    }
+
+    // For now, everything that isn't a def will just be assumed to be
+    // an arithmetic expression. We'll need to start handling defuns soon.
+    else {
+	emit_expr(ast);
+    }
+
+    for (int i = 0; i < 1024; i++) {
+	printf("%x ", instructions[i]);
+    }
+    printf("\n");
 }

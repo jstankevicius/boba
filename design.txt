@@ -1,0 +1,68 @@
+Lexer:
+Lexer structure right now is fine. Returns tokens in a vector.
+Only thing we need to fix is mayyybe making the tokens into a
+std::unique_ptr instead of a std::shared_ptr for better practices.
+
+Parser:
+Interface between lexer and parser can be a token queue. Lexer puts
+tokens into the queue, parser consumes tokens. This means there
+doesn't have to be an EOF token (which we already want to get rid of).
+
+This is nicer because lexer could hypothetically only lex part of
+a file, and parser could lex only the part of the stream that it needs.
+
+Parser now should be incremental. Instead of parsing the entire
+stream at once, we should have a function like get_ast() that only
+returns one top-level expression as an AST. This would allow us to
+pass the AST directly to the bytecode generator, which would pass
+it to the runtime to be evaluated.
+
+Actually, we already have this! It's just called "parse_expr".
+
+How do we structure the parser?
+
+
+
+
+
+
+
+Parser parser;
+Environment env;
+
+// For whole files, we may only need to tokenize once (i.e. tokenize the contents
+// of the whole file) and call parser.get_ast() until we don't have anything left
+// in the token queue.
+
+// For a REPL environment, we'll tokenize every input and immediately call
+// parser.get_ast(), generate_bytecode, and run.
+
+parser.tokenize_string(stream);
+auto& ast = parser.get_ast();
+
+env.generate_bytecode(ast); // maybe analysis takes place here
+env.run(); // This should probably only get called once for a file
+
+
+
+
+
+
+
+
+
+
+
+Bytecode:
+Probably the part that will need the most work.
+
+Again, needs to support incremental compilation. Right now, the
+bytecode generation part assumes that the AST represents the
+entire program.
+
+We won't do any instruction reordering; we're not that fancy.
+
+Right now our instructions are structs. They occupy, at time of
+writing, 56 bytes each, which is absolutely enormous for a stack
+machine. We should be able to compress them into raw bytes that
+are interpretable by the runtime.

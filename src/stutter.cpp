@@ -5,7 +5,6 @@
 
 #include "lexer.h"
 #include "parser.h"
-#include "bytecode.h"
 #include "runtime.h"
 
 int main(int argc, char *argv[])
@@ -27,20 +26,21 @@ int main(int argc, char *argv[])
     std::string content((std::istreambuf_iterator<char>(file)),
                         (std::istreambuf_iterator<char>()   ));
 
-    Lexer lexer;
     Parser parser;
-    auto tokens = lexer.tokenize_stream(content);
-    std::cout << "Tokens:" << std::endl;
-    for (auto& token : tokens) {
-        std::cout << token->string_value << " ";
-    }
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << "Parsing:" << std::endl;
+    Runtime runtime;
+
+    parser.tokenize_string(content);
+    auto ast = parser.parse_sexpr();
+    runtime.eval_ast(ast);
+    /*
+    Parser parser;
+    parser.tokenize_string(content);
+    
     auto ast = parser.parse_tokens(tokens);
     auto instructions = gen_bytecode(ast);
     std::cout << std::endl;
     print_instructions(instructions);
     Runtime runtime;
     runtime.execute(instructions);
+    */
 }

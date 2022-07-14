@@ -1,14 +1,17 @@
+#include "parser.h"
+
 #include <deque>
 #include <string>
 #include <iostream>
 #include <memory>
+
 #include "token.h"
 #include "error.h"
-#include "parser.h"
 #include "ast.h"
 #include "lexer.h"
 
 
+// "Show" (display) the AST in std::cout. Used for debugging.
 void show_ast(std::shared_ptr<AST> ast, int indent_level) {
     if (ast == NULL) return;
 
@@ -21,6 +24,8 @@ void show_ast(std::shared_ptr<AST> ast, int indent_level) {
 }
 
 
+// Expect the next token in the stream to have a particular string as
+// its contents. If not, fail with an error on the token.
 inline void expect_token_string(std::string str, std::deque<std::shared_ptr<Token>> &tokens) {
     auto& token = tokens.front();
     if (token->string_value != str)
@@ -31,6 +36,8 @@ inline void expect_token_string(std::string str, std::deque<std::shared_ptr<Toke
 }
 
 
+// Expect the next token in the stream to have a particular type. If
+// not, fail with an error on the token.
 inline void expect_token_type(TokenType type, std::deque<std::shared_ptr<Token>> &tokens) {
     assert(tokens.size() > 0);
     auto& token = tokens.front();
@@ -39,6 +46,9 @@ inline void expect_token_type(TokenType type, std::deque<std::shared_ptr<Token>>
         switch (type) {
             case TokenType::SYMBOL:
                 err_token(token, "expected a symbol");
+
+		// TODO: handle all token types. For now we only care
+		// about symbols.
             default:
                 err_token(token, "internal parser error: unhandled token type!");
         }
@@ -46,19 +56,6 @@ inline void expect_token_type(TokenType type, std::deque<std::shared_ptr<Token>>
     tokens.pop_front();
 }
 
-
-// parse_tokens
-// Parse a stream of tokens into an AST.
-std::shared_ptr<AST> Parser::parse_tokens(std::deque<std::shared_ptr<Token>> &tokens) {
-
-    auto root = std::make_shared<AST>(ASTType::ROOT, "");
-
-    while (tokens.front()->type != TokenType::_EOF) {
-        root->children.push_back(parse_expression(tokens));
-    }
-
-    return root;
-}
 
 /*
 void check_valid_symbol(std::string symbol) {
@@ -70,7 +67,20 @@ void check_valid_symbol(std::string symbol) {
 }
 */
 
-std::shared_ptr<AST> Parser::parse_expression(std::deque<std::shared_ptr<Token>> &tokens) {
+
+void Parser::tokenize_string(std::string &str) {
+    Lexer lexer;
+    auto lexed_tokens = lexer.tokenize_stream(str);
+
+    for (auto& token : lexed_tokens) {
+	tokens.push_back(token);
+    }
+}
+
+
+// Parse an s-expression from the token stream. An expression (for now)
+// is anything that is enclosed by parentheses.
+std::shared_ptr<AST> Parser::parse_sexpr() {
     
     expect_token_string("(", tokens);
 
@@ -98,11 +108,12 @@ std::shared_ptr<AST> Parser::parse_expression(std::deque<std::shared_ptr<Token>>
             expect_token_type(TokenType::BOOL_LITERAL, tokens);
         } 
         else if (front->string_value == "(") {
-            ast->children.push_back(parse_expression(tokens));
+            ast->children.push_back(parse_sexpr());
         } else {
             err_token(front, "internal parser error: unhandled token type");
         }
     }
     expect_token_string(")", tokens);
+    show_ast(ast, 0);
     return ast;
 }

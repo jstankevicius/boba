@@ -8,25 +8,28 @@
 
 Lexer::Lexer() {}
 
+// Functions for interacting with the lexer stream
 bool Lexer::done() {
     return stream_idx >= stream.length();
 }
 
-void Lexer::advance_char() {
 
+void Lexer::advance_char() {
+    
     char cur = cur_char();
     if (!done()) {
         stream_idx++;
         col_num++;
 
         if (cur == '\n' || (cur == '\r' && lookahead_char(1) == '\n')) {
-            // If we went over to the next line, reset col_num to 1 and
-            // increment line_num.
+            // If we went over to the next line, reset col_num to 1
+	    // and increment line_num.
             col_num = 1;
             line_num++;
         }
     }
 }
+
 
 char Lexer::cur_char() {
 
@@ -36,12 +39,14 @@ char Lexer::cur_char() {
     return -1;
 }
 
+
 char Lexer::lookahead_char(int lookahead) {
     if (stream_idx + lookahead < stream.length())
         return stream[stream_idx + lookahead];
 
     return -1;
 }
+
 
 char Lexer::lookahead_char_at(int idx, int lookahead) {
     if (idx + lookahead < stream.length())
@@ -50,12 +55,15 @@ char Lexer::lookahead_char_at(int idx, int lookahead) {
     return -1;
 }
 
+
 void Lexer::skip_whitespace() {
     while (is_whitespace(cur_char())) {
         advance_char();
     }
 }
 
+
+// Returns a token that is either an identifier or a keyword.
 std::shared_ptr<Token> Lexer::get_identifier_or_keyword()  {
 
     auto token = std::make_shared<Token>();
@@ -82,6 +90,8 @@ std::shared_ptr<Token> Lexer::get_identifier_or_keyword()  {
     return token;
 }
 
+
+// Returns an operator token.
 std::shared_ptr<Token> Lexer::get_operator() {
 
     auto token = std::make_shared<Token>();
@@ -101,6 +111,8 @@ std::shared_ptr<Token> Lexer::get_operator() {
     return token;
 }
 
+
+// Returns a token for a numeric literal (like 123 or 3.14).
 std::shared_ptr<Token> Lexer::get_numeric_literal() {
 
     auto token = std::make_shared<Token>();
@@ -143,6 +155,9 @@ std::shared_ptr<Token> Lexer::get_numeric_literal() {
     return token;
 }
 
+
+// Returns a token for "punctuation". This is a catch-all term for
+// tokens that are not symbols or literals.
 std::shared_ptr<Token> Lexer::get_punctuation() {
     
     auto token = std::make_shared<Token>();
@@ -153,6 +168,8 @@ std::shared_ptr<Token> Lexer::get_punctuation() {
     token->type = TokenType::PUNCTUATION;
 
     switch (cur_char()) {
+
+	// All supported "punctuation" types can be seen here:
         case '(':
         case ')':
         case '{':
@@ -169,6 +186,8 @@ std::shared_ptr<Token> Lexer::get_punctuation() {
     return token;
 }
 
+
+// Returns a token for a string literal, like "Hello".
 std::shared_ptr<Token> Lexer::get_string_literal() {
 
     auto token = std::make_shared<Token>();
@@ -200,6 +219,7 @@ std::shared_ptr<Token> Lexer::get_string_literal() {
 }
 
 
+// Tokenizes a "stream", which is a program represented as a string.
 std::deque<std::shared_ptr<Token>> Lexer::tokenize_stream(std::string &stream)  {
     this->stream = stream;
     std::deque<std::shared_ptr<Token>> tokens;
@@ -246,6 +266,7 @@ std::deque<std::shared_ptr<Token>> Lexer::tokenize_stream(std::string &stream)  
         skip_whitespace();
     }
 
+    // Add an EOF token, which may actually not be necessary.
     auto eof_token = std::make_shared<Token>();
     eof_token->type = TokenType::_EOF;
     eof_token->string_value = "EOF";
