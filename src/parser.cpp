@@ -67,6 +67,10 @@ void check_valid_symbol(std::string symbol) {
 }
 */
 
+bool Parser::eof() {
+    return tokens.front()->type == TokenType::Eof;
+}
+
 
 void Parser::tokenize_string(std::string &str) {
     Lexer lexer;

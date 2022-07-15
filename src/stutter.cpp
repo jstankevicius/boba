@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 
     file.open(argv[1]);
 
-    if (!file.is_open()) 
+    if (!file.is_open())
     {
         perror("Error: open()");
         exit(EXIT_FAILURE);
@@ -30,17 +30,8 @@ int main(int argc, char *argv[])
     Runtime runtime;
 
     parser.tokenize_string(content);
-    auto ast = parser.parse_sexpr();
-    runtime.eval_ast(ast);
-    /*
-    Parser parser;
-    parser.tokenize_string(content);
-    
-    auto ast = parser.parse_tokens(tokens);
-    auto instructions = gen_bytecode(ast);
-    std::cout << std::endl;
-    print_instructions(instructions);
-    Runtime runtime;
-    runtime.execute(instructions);
-    */
+    while (!parser.eof()) {
+        auto ast = parser.parse_sexpr();
+        runtime.eval_ast(ast);
+    }
 }

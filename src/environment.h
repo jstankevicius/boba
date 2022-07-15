@@ -2,6 +2,7 @@
 
 #include <any>
 #include <unordered_map>
+#include <string>
 
 enum class ValueType { Int, Float, Str, Bool, Ref };
 
@@ -15,14 +16,9 @@ struct Value {
 };
 
 
-class Environment {
-private:
+struct Environment {
 
     // "Memory" for getting the value of a variable based on its index.
     std::unordered_map<int, Value> memory;
-
-
-
-public:
-
+    std::unordered_map<std::string, int> var_indices;
 };

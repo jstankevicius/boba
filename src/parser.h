@@ -32,5 +32,6 @@ private:
     
 public:
     void tokenize_string(std::string &str);
+    bool eof();
     std::shared_ptr<AST> parse_sexpr();
 };

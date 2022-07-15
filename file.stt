@@ -1,2 +1,4 @@
 ; This is a comment!
-(- 2 3)
+(def a 2)
+(def b 3)
+(+ a b)

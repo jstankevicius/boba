@@ -43,7 +43,10 @@
 
   (def a 1) ; <= 'a' gets assigned index 0
   (defun f () ; <= 'f' gets assigned index 1
-    (def a 2) ; <= This is a different scope now, so this 'a' gets index 2
+    (def b 2) ; <= This is a different scope now, so this 'a' gets index 2
+    (+ a b)
+    ; Any time a function refers to a variable, we look through the environment
+    ; stack and find the index of this variable.
 
 
   Any time we define a variable we should check the current scope.
@@ -72,7 +75,10 @@ class Runtime {
 private:
     Processor proc;
 
+    int var_counter = 0;
+
     void emit_push_int(int i);
+    void emit_push_ref(std::string &name);
     void emit_push(std::shared_ptr<AST> ast);
     void emit_def(std::shared_ptr<AST> ast);
     void emit_expr(std::shared_ptr<AST> ast);
@@ -81,7 +87,7 @@ public:
 
     Runtime() {
         proc.envs.push_back(Environment());
-        std::memset(proc.instructions, 0, 1024);
+        std::memset(proc.instructions, 0, PROC_INSTRUCTION_SIZE);
     }
 
     void eval_ast(std::shared_ptr<AST> ast);

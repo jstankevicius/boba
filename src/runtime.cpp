@@ -6,19 +6,6 @@
 
 #include "processor.h"
 
-template <typename T>
-inline void mem_put(T value, unsigned char* arr) {
-    std::memcpy(arr, &value, sizeof(T));
-}
-
-template <typename T>
-inline T mem_get(unsigned char* arr) {
-    T value;
-    std::memcpy(&value, arr, sizeof(T));
-    return value;
-}
-
-
 // Relative emit - emits an int exactly at write_offset, then
 // advances write_offset.
 inline void Runtime::emit_push_int(int i) {
@@ -27,11 +14,36 @@ inline void Runtime::emit_push_int(int i) {
     // the line to break up push_i into a push_i where the arguments are
     // different sizes to save space. Right now we have a lot of empty bytes
     // in the instruction buffer.
-
-    mem_put<Instruction>(Instruction::PushInt, proc.instructions + proc.write_offset);
+    mem_put<Instruction>(Instruction::PushInt, proc.write_head());
     proc.write_offset += sizeof(unsigned char);
 
-    mem_put<int>(i, proc.instructions + proc.write_offset);
+    mem_put<int>(i, proc.write_head());
+    proc.write_offset += sizeof(int);
+}
+
+
+// Emite a push_ref instruction for a symbol with name `name`.
+inline void Runtime::emit_push_ref(std::string &name) {
+    // Figure out this ref's index. Start at the current environment and go
+    // back up the stack, looking for the name. If not found, error out.
+    int var_index = -1;
+    for (int i = proc.envs.size() - 1; i >= 0; i--) {
+        auto& var_indices = proc.envs[i].var_indices;
+        if (var_indices.count(name) > 0) {
+            var_index = var_indices[name];
+            break;
+        }
+    }
+
+    if (var_index < 0) {
+        // TODO: fail here.
+        std::cout << "Error: undefined variable: " << name << std::endl;
+        exit(-1);
+    }
+
+    mem_put<Instruction>(Instruction::PushRef, proc.write_head());
+    proc.write_offset += sizeof(Instruction);
+    mem_put<int>(var_index, proc.write_head());
     proc.write_offset += sizeof(int);
 }
 
@@ -41,6 +53,9 @@ void Runtime::emit_push(std::shared_ptr<AST> ast) {
     switch (ast->type) {
     case ASTType::IntLiteral:
         emit_push_int(std::stoi(ast->string_value));
+        break;
+    case ASTType::Symbol:
+        emit_push_ref(ast->string_value);
         break;
     default:
         break;
@@ -63,37 +78,52 @@ void Runtime::emit_expr(std::shared_ptr<AST> ast) {
 
     // TODO: make this more robust. We'll need to handle a lot more
     // cases of function calls. It'll also need to work on stuff like floats.
-
-    if (ast_val == "+") {
-        mem_put<Instruction>(Instruction::Add, proc.instructions + proc.write_offset);
-        proc.write_offset += sizeof(unsigned char);
-    }
-
+    // This needs to be expandable to more builtin functions.
+    if (ast_val == "+")
+        mem_put<Instruction>(Instruction::Add, proc.write_head());
     else if (ast_val == "-") {
-        if (ast->children.size() == 1) {
-            mem_put<Instruction>(Instruction::Neg, proc.instructions + proc.write_offset);
-            proc.write_offset += sizeof(unsigned char);
-        }
-
-        else {
-            mem_put<Instruction>(Instruction::Sub, proc.instructions + proc.write_offset);
-            proc.write_offset += sizeof(unsigned char);
-        }
+        if (ast->children.size() == 1)
+            mem_put<Instruction>(Instruction::Neg, proc.write_head());
+        else
+            mem_put<Instruction>(Instruction::Sub, proc.write_head());
     }
+    else if (ast_val == "*")
+        mem_put<Instruction>(Instruction::Mul, proc.write_head());
+    else if (ast_val == "/")
+        mem_put<Instruction>(Instruction::Div, proc.write_head());
 
-    else if (ast_val == "*") {
-        mem_put<Instruction>(Instruction::Mul, proc.instructions + proc.write_offset);
-        proc.write_offset += sizeof(unsigned char);
-    }
+    proc.write_offset += sizeof(Instruction);
 
-    else if (ast_val == "/") {
-        mem_put<Instruction>(Instruction::Div, proc.instructions + proc.write_offset);
-        proc.write_offset += sizeof(unsigned char);
-    }
 }
 
-void Runtime::emit_def(std::shared_ptr<AST>) {
+void Runtime::emit_def(std::shared_ptr<AST> ast) {
+    // Leftmost child is always the symbol name
+    // TODO: error handling here, like for having too many child nodes
+    auto left = ast->children[0];
+    auto right = ast->children[1];
+    std::string symbol_name = left->string_value;
 
+    if (right->type == ASTType::Expr)
+        emit_expr(right);
+
+    else
+        emit_push(right);
+
+    mem_put<Instruction>(Instruction::Store, proc.write_head());
+    proc.write_offset += sizeof(Instruction);
+
+    // Now figure out the variable number
+    int var_number = var_counter;
+
+    // Look for symbol in this environment
+    if (proc.envs.back().var_indices.count(symbol_name) > 0) {
+        // Symbol is already defined in this environent; fail.
+    }
+
+    proc.envs.back().var_indices[symbol_name] = var_number;
+    mem_put<int>(var_counter, proc.write_head());
+    var_counter++;
+    proc.write_offset += sizeof(int);
 }
 
 void Runtime::eval_ast(std::shared_ptr<AST> ast) {
@@ -109,10 +139,10 @@ void Runtime::eval_ast(std::shared_ptr<AST> ast) {
     else {
         emit_expr(ast);
     }
-
+    
     // Run until we hit a 0 byte
-    while (proc.instructions[proc.ip]) {
-        unsigned char inst = proc.instructions[proc.ip];
+    while (proc.cur_byte()) {
+        unsigned char inst = proc.cur_byte();
         // Normally we'd expect the instruction pointer to be incremented after
         // the instruction is executed. Doing it this way lets the jumped-to
         // function immediately read any arguments from memory without having to
@@ -122,5 +152,4 @@ void Runtime::eval_ast(std::shared_ptr<AST> ast) {
     }
 
     //printf("Instruction size: %lld bytes\n", proc.write_offset - old_woff);
-    //printf("Result: %d\n", proc.stack.back().as<int>());
 }
