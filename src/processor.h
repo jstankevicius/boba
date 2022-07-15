@@ -1,9 +1,26 @@
 #pragma once
 
 #include <vector>
-
-#include "bytecode.h"
 #include "environment.h"
+
+enum class Instruction : unsigned char {
+    PushInt = 1,
+    PushStr,
+    PushFloat,
+    PushRef,
+    PushTrue,
+    PushFalse,
+    PushNil,
+
+    Store,
+
+    Add,
+    Sub,
+    Mul,
+    Div,
+
+    Neg,
+};
 
 struct Processor {
     // Instruction pointer.

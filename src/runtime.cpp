@@ -4,7 +4,6 @@
 #include <iostream>
 #include <math.h>
 
-#include "bytecode.h"
 #include "processor.h"
 
 template <typename T>
