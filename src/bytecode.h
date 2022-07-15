@@ -9,7 +9,7 @@ enum class Instruction : unsigned char {
     PushFalse,
     PushNil,
 
-    STORE,
+    Store,
 
     Add,
     Sub,
