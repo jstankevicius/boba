@@ -5,12 +5,12 @@
   1 byte per instruction type. This means a total of 256 possible instructions.
 
   Types:
-  
+
   push_i          Push an integer onto the stack
   push_str        Push a string onto the stack
   push_f          Push a float onto the stack
   push_ref        Get a symbol's value and push it onto the stack
-  
+
   push_true       Push the boolean "true" onto the stack
   push_false      Push the boolean "false" onto the stack
   push_nil        Push "nil" onto the stack
@@ -27,7 +27,7 @@
 
   mul_i           Multiply two integers
   mul_f           Multiply two floats
-   
+
   div_i           Divide two integers
   div_f           Divide two floats
 
@@ -51,7 +51,7 @@
     error - variable redefinition
   Else:
     Increment counter and add (counter: symbol) to variable_entries
-  
+
 */
 #pragma once
 
@@ -64,37 +64,25 @@
 
 #include "ast.h"
 #include "environment.h"
+#include "processor.h"
+
 
 class Runtime {
 
 private:
-
-    // Instruction pointer.
-    long long ip;
-
-    // Instruction bytes.
-    unsigned char instructions[1024];
-
-    // Offset into the instruction buffer.
-    long long write_offset = 0;
-
-    // Program stack.
-    std::vector<Value> stack;
-
-    // Environment stack.
-    std::vector<Environment> envs;
+    Processor proc;
 
     void emit_push_int(int i);
     void emit_push(std::shared_ptr<AST> ast);
     void emit_def(std::shared_ptr<AST> ast);
     void emit_expr(std::shared_ptr<AST> ast);
-    
+
 public:
 
     Runtime() {
-        envs.push_back(Environment());
-        std::memset(instructions, 0, 1024);
+        proc.envs.push_back(Environment());
+        std::memset(proc.instructions, 0, 1024);
     }
-    
+
     void eval_ast(std::shared_ptr<AST> ast);
 };

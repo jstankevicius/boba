@@ -1,9 +1,11 @@
 #include "runtime.h"
 
+#include <cstdarg>
 #include <iostream>
 #include <math.h>
 
 #include "bytecode.h"
+#include "processor.h"
 
 template <typename T>
 inline void mem_put(T value, unsigned char* arr) {
@@ -27,25 +29,23 @@ inline void Runtime::emit_push_int(int i) {
     // different sizes to save space. Right now we have a lot of empty bytes
     // in the instruction buffer.
 
-    mem_put<Instruction>(Instruction::PUSH_I, instructions + write_offset);
-    write_offset += sizeof(unsigned char);
+    mem_put<Instruction>(Instruction::PushInt, proc.instructions + proc.write_offset);
+    proc.write_offset += sizeof(unsigned char);
 
-    mem_put<int>(i, instructions + write_offset);
-    write_offset += sizeof(int);
-
+    mem_put<int>(i, proc.instructions + proc.write_offset);
+    proc.write_offset += sizeof(int);
 }
 
 
 void Runtime::emit_push(std::shared_ptr<AST> ast) {
     assert(ast->children.size() == 0);
     switch (ast->type) {
-    case ASTType::INT_LITERAL:
+    case ASTType::IntLiteral:
         emit_push_int(std::stoi(ast->string_value));
         break;
     default:
         break;
     }
-
 }
 
 
@@ -54,8 +54,8 @@ void Runtime::emit_expr(std::shared_ptr<AST> ast) {
 
     // First, add all the operands to the stack:
     for (auto& child : ast->children) {
-        if (child->type == ASTType::EXPR)
-             emit_expr(child);
+        if (child->type == ASTType::Expr)
+            emit_expr(child);
         else
             emit_push(child);
     }
@@ -66,40 +66,41 @@ void Runtime::emit_expr(std::shared_ptr<AST> ast) {
     // cases of function calls. It'll also need to work on stuff like floats.
 
     if (ast_val == "+") {
-        mem_put<Instruction>(Instruction::ADD_I, instructions + write_offset);
-        write_offset += sizeof(unsigned char);
+        mem_put<Instruction>(Instruction::Add, proc.instructions + proc.write_offset);
+        proc.write_offset += sizeof(unsigned char);
     }
 
     else if (ast_val == "-") {
         if (ast->children.size() == 1) {
-            mem_put<Instruction>(Instruction::NEG_I, instructions + write_offset);
-            write_offset += sizeof(unsigned char);
+            mem_put<Instruction>(Instruction::Neg, proc.instructions + proc.write_offset);
+            proc.write_offset += sizeof(unsigned char);
         }
 
         else {
-            mem_put<Instruction>(Instruction::SUB_I, instructions + write_offset);
-            write_offset += sizeof(unsigned char);
+            mem_put<Instruction>(Instruction::Sub, proc.instructions + proc.write_offset);
+            proc.write_offset += sizeof(unsigned char);
         }
     }
 
-
     else if (ast_val == "*") {
-        mem_put<Instruction>(Instruction::MUL_I, instructions + write_offset);
-        write_offset += sizeof(unsigned char);
+        mem_put<Instruction>(Instruction::Mul, proc.instructions + proc.write_offset);
+        proc.write_offset += sizeof(unsigned char);
     }
 
     else if (ast_val == "/") {
-        mem_put<Instruction>(Instruction::DIV_I, instructions + write_offset);
-        write_offset += sizeof(unsigned char);
+        mem_put<Instruction>(Instruction::Div, proc.instructions + proc.write_offset);
+        proc.write_offset += sizeof(unsigned char);
     }
 }
 
-void Runtime::emit_def(std::shared_ptr<AST> ast) {
+void Runtime::emit_def(std::shared_ptr<AST>) {
 
 }
 
 void Runtime::eval_ast(std::shared_ptr<AST> ast) {
-    //std::cout << "eval_ast" << std::endl;
+
+    long long old_woff = proc.write_offset;
+
     // Determine the type of AST we're evaluating.
     if (ast->string_value == "def") {
         emit_def(ast);
@@ -111,8 +112,18 @@ void Runtime::eval_ast(std::shared_ptr<AST> ast) {
         emit_expr(ast);
     }
 
-    for (int i = 0; i < 1024; i++) {
-        printf("%x ", instructions[i]);
+    // Run until we hit a 0 byte
+    while (proc.instructions[proc.ip]) {
+        unsigned char inst = proc.instructions[proc.ip];
+
+        // Normally we'd expect the instruction pointer to be incremented after
+        // the instruction is executed. Doing it this way lets the jumped-to
+        // function immediately read any arguments from memory without having to
+        // increment ip.
+        proc.ip++;
+        proc.jump_table[inst](proc);
     }
-    printf("\n");
+
+    printf("Instruction size: %lld bytes\n", proc.write_offset - old_woff);
+    printf("Result: %d\n", proc.stack.back().as<int>());
 }

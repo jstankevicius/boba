@@ -5,17 +5,17 @@
 #include "token.h"
 
 enum class ASTType {
-    ROOT,
+    Root,
 
-    EXPR, // implicit grouping of parentheses
+    Expr, // implicit grouping of parentheses
 
-    SYMBOL,
+    Symbol,
 
     // Literals
-    INT_LITERAL,
-    FLOAT_LITERAL,
-    STR_LITERAL,
-    BOOL_LITERAL,
+    IntLiteral,
+    FloatLiteral,
+    StrLiteral,
+    BoolLiteral,
 };
 
 struct AST {

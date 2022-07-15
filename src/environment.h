@@ -3,7 +3,7 @@
 #include <any>
 #include <unordered_map>
 
-enum class ValueType { INT, FLOAT, STR, BOOL, REF };
+enum class ValueType { Int, Float, Str, Bool, Ref };
 
 struct Value {
     ValueType type;
@@ -21,8 +21,8 @@ private:
     // "Memory" for getting the value of a variable based on its index.
     std::unordered_map<int, Value> memory;
 
-    
-        
+
+
 public:
-    
+
 };

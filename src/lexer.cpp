@@ -15,7 +15,7 @@ bool Lexer::done() {
 
 
 void Lexer::advance_char() {
-    
+
     char cur = cur_char();
     if (!done()) {
         stream_idx++;
@@ -35,7 +35,7 @@ char Lexer::cur_char() {
 
     if (!done())
         return stream[stream_idx];
-    
+
     return -1;
 }
 
@@ -84,8 +84,8 @@ std::shared_ptr<Token> Lexer::get_identifier_or_keyword()  {
     token->string_value = str;
 
     // TODO: formatting?
-    token->type = (str == "true" || str == "false") ? 
-                  TokenType::BOOL_LITERAL : TokenType::SYMBOL;
+    token->type = (str == "true" || str == "false") ?
+                  TokenType::BoolLiteral : TokenType::Symbol;
 
     return token;
 }
@@ -106,7 +106,7 @@ std::shared_ptr<Token> Lexer::get_operator() {
     }
 
     token->string_value = op;
-    token->type = TokenType::SYMBOL;
+    token->type = TokenType::Symbol;
 
     return token;
 }
@@ -150,7 +150,7 @@ std::shared_ptr<Token> Lexer::get_numeric_literal() {
         advance_char();
     }
     token->string_value = num_literal;
-    token->type = is_float_literal ? TokenType::FLOAT_LITERAL : TokenType::INT_LITERAL;
+    token->type = is_float_literal ? TokenType::FloatLiteral : TokenType::IntLiteral;
 
     return token;
 }
@@ -159,13 +159,13 @@ std::shared_ptr<Token> Lexer::get_numeric_literal() {
 // Returns a token for "punctuation". This is a catch-all term for
 // tokens that are not symbols or literals.
 std::shared_ptr<Token> Lexer::get_punctuation() {
-    
+
     auto token = std::make_shared<Token>();
     token->col_num = col_num;
     token->line_num = line_num;
     token->stream = &stream;
     token->string_value += cur_char();
-    token->type = TokenType::PUNCTUATION;
+    token->type = TokenType::Punctuation;
 
     switch (cur_char()) {
 
@@ -213,7 +213,7 @@ std::shared_ptr<Token> Lexer::get_string_literal() {
         err_token(token, "no matching quote");
     }
 
-    token->type = TokenType::STR_LITERAL;;
+    token->type = TokenType::StrLiteral;;
     token->string_value = str_literal;
     return token;
 }
@@ -231,13 +231,13 @@ std::deque<std::shared_ptr<Token>> Lexer::tokenize_stream(std::string &stream)  
             tokens.push_back(get_identifier_or_keyword());
 
         // Case for negative numbers:
-        else if ((cur_char() == '-') 
+        else if ((cur_char() == '-')
             && (lookahead_char(1) == '.' || is_numeric(lookahead_char(1))))
                 tokens.push_back(get_numeric_literal());
 
         else if (is_operator(cur_char()))
             tokens.push_back(get_operator());
-        
+
         else if (is_numeric(cur_char())
             || (cur_char() == '.' && is_numeric(lookahead_char(1))))
             tokens.push_back(get_numeric_literal());
@@ -245,7 +245,7 @@ std::deque<std::shared_ptr<Token>> Lexer::tokenize_stream(std::string &stream)  
         // Beginning of a string literal
         else if (cur_char() == '"')
             tokens.push_back(get_string_literal());
-        
+
         // Comments. We'll just skip the rest of the line here.
         else if (cur_char() == ';') {
             advance_char(); // skip over #
@@ -268,7 +268,7 @@ std::deque<std::shared_ptr<Token>> Lexer::tokenize_stream(std::string &stream)  
 
     // Add an EOF token, which may actually not be necessary.
     auto eof_token = std::make_shared<Token>();
-    eof_token->type = TokenType::_EOF;
+    eof_token->type = TokenType::Eof;
     eof_token->string_value = "EOF";
     eof_token->stream = &stream;
     eof_token->col_num = col_num;

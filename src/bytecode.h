@@ -1,28 +1,20 @@
-
+#pragma once
 
 enum class Instruction : unsigned char {
-    PUSH_I = 1,
-    PUSH_STR,
-    PUSH_F,
-    PUSH_REF,
-    PUSH_TRUE,
-    PUSH_FALSE,
-    PUSH_NIL,
+    PushInt = 1,
+    PushStr,
+    PushFloat,
+    PushRef,
+    PushTrue,
+    PushFalse,
+    PushNil,
 
     STORE,
 
-    ADD_I,
-    ADD_F,
+    Add,
+    Sub,
+    Mul,
+    Div,
 
-    SUB_I,
-    SUB_F,
-
-    NEG_I,
-    NEG_F,
-
-    MUL_I,
-    MUL_F,
-
-    DIV_I,
-    DIV_F
+    Neg,
 };

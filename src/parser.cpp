@@ -31,7 +31,7 @@ inline void expect_token_string(std::string str, std::deque<std::shared_ptr<Toke
     if (token->string_value != str)
         err_token(token, "syntax error: expected '" + str + "', but got '"
             + token->string_value + "' ");
-    
+
     tokens.pop_front();
 }
 
@@ -44,7 +44,7 @@ inline void expect_token_type(TokenType type, std::deque<std::shared_ptr<Token>>
 
     if (tokens.front()->type != type) {
         switch (type) {
-            case TokenType::SYMBOL:
+            case TokenType::Symbol:
                 err_token(token, "expected a symbol");
 
 		// TODO: handle all token types. For now we only care
@@ -81,32 +81,32 @@ void Parser::tokenize_string(std::string &str) {
 // Parse an s-expression from the token stream. An expression (for now)
 // is anything that is enclosed by parentheses.
 std::shared_ptr<AST> Parser::parse_sexpr() {
-    
+
     expect_token_string("(", tokens);
 
-    auto ast = std::make_shared<AST>(ASTType::EXPR, tokens.front()->string_value);
-    expect_token_type(TokenType::SYMBOL, tokens);
+    auto ast = std::make_shared<AST>(ASTType::Expr, tokens.front()->string_value);
+    expect_token_type(TokenType::Symbol, tokens);
     //check_valid_symbol(ast->string_value);
 
-    while (tokens.front()->type != TokenType::_EOF && tokens.front()->string_value != ")") {
+    while (tokens.front()->type != TokenType::Eof && tokens.front()->string_value != ")") {
         auto& front = tokens.front();
 
-        if (front->type == TokenType::SYMBOL) {
-            ast->add_leaf_child(ASTType::SYMBOL, front->string_value);
-            expect_token_type(TokenType::SYMBOL, tokens);
-        } else if (front->type == TokenType::STR_LITERAL) {
-            ast->add_leaf_child(ASTType::STR_LITERAL, front->string_value);
-            expect_token_type(TokenType::STR_LITERAL, tokens);
-        } else if (front->type == TokenType::INT_LITERAL) {
-            ast->add_leaf_child(ASTType::INT_LITERAL, front->string_value);
-            expect_token_type(TokenType::INT_LITERAL, tokens);
-        } else if (front->type == TokenType::FLOAT_LITERAL) {
-            ast->add_leaf_child(ASTType::FLOAT_LITERAL, front->string_value);
-            expect_token_type(TokenType::FLOAT_LITERAL, tokens);
-        } else if (front->type == TokenType::BOOL_LITERAL) {
-            ast->add_leaf_child(ASTType::BOOL_LITERAL, front->string_value);
-            expect_token_type(TokenType::BOOL_LITERAL, tokens);
-        } 
+        if (front->type == TokenType::Symbol) {
+            ast->add_leaf_child(ASTType::Symbol, front->string_value);
+            expect_token_type(TokenType::Symbol, tokens);
+        } else if (front->type == TokenType::StrLiteral) {
+            ast->add_leaf_child(ASTType::StrLiteral, front->string_value);
+            expect_token_type(TokenType::StrLiteral, tokens);
+        } else if (front->type == TokenType::IntLiteral) {
+            ast->add_leaf_child(ASTType::IntLiteral, front->string_value);
+            expect_token_type(TokenType::IntLiteral, tokens);
+        } else if (front->type == TokenType::FloatLiteral) {
+            ast->add_leaf_child(ASTType::FloatLiteral, front->string_value);
+            expect_token_type(TokenType::FloatLiteral, tokens);
+        } else if (front->type == TokenType::BoolLiteral) {
+            ast->add_leaf_child(ASTType::BoolLiteral, front->string_value);
+            expect_token_type(TokenType::BoolLiteral, tokens);
+        }
         else if (front->string_value == "(") {
             ast->children.push_back(parse_sexpr());
         } else {
@@ -114,6 +114,6 @@ std::shared_ptr<AST> Parser::parse_sexpr() {
         }
     }
     expect_token_string(")", tokens);
-    show_ast(ast, 0);
+    // show_ast(ast, 0);
     return ast;
 }
