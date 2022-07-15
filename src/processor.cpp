@@ -42,12 +42,20 @@ void div(Processor &proc) {
     proc.stack.push_back((Value){.type = ValueType::Int, .value = b / a});
 }
 
+void neg(Processor &proc) {
+    int a;
+
+    proc.pop_as<int>(a);
+    proc.stack.push_back((Value){.type = ValueType::Int, .value = -a});
+}
+
 Processor::Processor() {
     INST_ENTRY(Instruction::PushInt, push_i);
     INST_ENTRY(Instruction::Add, add);
     INST_ENTRY(Instruction::Sub, sub);
     INST_ENTRY(Instruction::Mul, mul);
     INST_ENTRY(Instruction::Div, div);
+    INST_ENTRY(Instruction::Neg, neg);
 }
 
 

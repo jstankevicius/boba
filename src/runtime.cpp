@@ -97,7 +97,6 @@ void Runtime::emit_def(std::shared_ptr<AST>) {
 }
 
 void Runtime::eval_ast(std::shared_ptr<AST> ast) {
-
     long long old_woff = proc.write_offset;
 
     // Determine the type of AST we're evaluating.
@@ -114,7 +113,6 @@ void Runtime::eval_ast(std::shared_ptr<AST> ast) {
     // Run until we hit a 0 byte
     while (proc.instructions[proc.ip]) {
         unsigned char inst = proc.instructions[proc.ip];
-
         // Normally we'd expect the instruction pointer to be incremented after
         // the instruction is executed. Doing it this way lets the jumped-to
         // function immediately read any arguments from memory without having to
@@ -123,6 +121,6 @@ void Runtime::eval_ast(std::shared_ptr<AST> ast) {
         proc.jump_table[inst](proc);
     }
 
-    printf("Instruction size: %lld bytes\n", proc.write_offset - old_woff);
-    printf("Result: %d\n", proc.stack.back().as<int>());
+    //printf("Instruction size: %lld bytes\n", proc.write_offset - old_woff);
+    //printf("Result: %d\n", proc.stack.back().as<int>());
 }

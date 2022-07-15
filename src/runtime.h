@@ -85,4 +85,9 @@ public:
     }
 
     void eval_ast(std::shared_ptr<AST> ast);
+
+    template<typename T>
+    inline T get_stack_top() {
+        return proc.stack.back().as<T>();
+    }
 };
