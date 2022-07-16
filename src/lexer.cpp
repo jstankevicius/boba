@@ -72,10 +72,8 @@ std::shared_ptr<Token> Lexer::get_identifier_or_keyword()  {
     token->stream = &stream;
     std::string str;
 
-    // Don't need to check for out of bounds since cur_char just returns -1 once
-    // we've reached the end of the stream.
-    // TODO: Although the lexer isn't enforcing any sort of naming scheme, we
-    // can enforce variable naming rules in the parser.
+    // Don't need to check for out of bounds since cur_char just
+    // returns -1 once we've reached the end of the stream.
     while (is_alphanumeric(cur_char())) {
         str += cur_char();
         advance_char();
@@ -132,8 +130,8 @@ std::shared_ptr<Token> Lexer::get_numeric_literal() {
         advance_char();
     }
 
-    // Next character could potentially be a '.', which would make this a float
-    // literal.
+    // Next character could potentially be a '.', which would make
+    // this a float literal.
     if (cur_char() == '.' && is_numeric(lookahead_char(1))) {
         is_float_literal = true;
         num_literal += cur_char();
@@ -220,7 +218,9 @@ std::shared_ptr<Token> Lexer::get_string_literal() {
 
 
 // Tokenizes a "stream", which is a program represented as a string.
-std::deque<std::shared_ptr<Token>> Lexer::tokenize_stream(std::string &stream)  {
+std::deque<std::shared_ptr<Token>>
+Lexer::tokenize_stream(std::string &stream)  {
+    
     this->stream = stream;
     std::deque<std::shared_ptr<Token>> tokens;
 

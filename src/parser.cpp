@@ -82,8 +82,8 @@ void Parser::tokenize_string(std::string &str) {
 }
 
 
-// Parse an s-expression from the token stream. An expression (for now)
-// is anything that is enclosed by parentheses.
+// Parse an s-expression from the token stream. An expression (for
+// now) is anything that is enclosed by parentheses.
 std::shared_ptr<AST> Parser::parse_sexpr() {
 
     expect_token_string("(", tokens);

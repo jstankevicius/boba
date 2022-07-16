@@ -8,8 +8,8 @@
 
 #define BUILTIN_ENTRY
 
-// Relative emit - emits an int exactly at write_offset, then
-// advances write_offset.
+// Relative emit - emits an int exactly at write_offset, then advances
+// write_offset.
 inline void Runtime::emit_push_int(int i) {
 
     // For now, we'll actually only consider one size. It may be

@@ -32,7 +32,8 @@ struct Value {
 
 struct Environment {
 
-    // "Memory" for getting the value of a variable based on its index.
+    // "Memory" for getting the value of a variable based on its
+    // index.
     std::unordered_map<int, Value> memory;
     std::unordered_map<std::string, int> var_indices;
 };
