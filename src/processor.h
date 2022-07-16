@@ -6,6 +6,8 @@
 #define PROC_INSTRUCTION_SIZE 1024
 
 enum class Instruction : unsigned char {
+
+    // Pushing stuff onto the stack:
     PushInt = 1,
     PushStr,
     PushFloat,
@@ -15,9 +17,28 @@ enum class Instruction : unsigned char {
     PushFalse,
     
     PushNil,
-    
+
+    // Store:
     Store,
-    
+
+    // Jumps:
+    Jmp, // Absolute jump
+    JmpTrue,
+    JmpFalse,
+
+    // Logic:
+    Not,
+    And,
+    Or,
+
+    // Comparison:
+    Eq,
+    Greater,
+    GreaterEq,
+    Less,
+    LessEq,
+
+    // Arithmetic:
     Add,
     Sub,
     Mul,
@@ -27,13 +48,13 @@ enum class Instruction : unsigned char {
 
 struct Processor {
     // Instruction pointer.
-    long long ip;
+    long ip;
 
     // Instruction bytes.
     unsigned char instructions[PROC_INSTRUCTION_SIZE];
 
     // Offset into the instruction buffer.
-    long long write_offset = 0;
+    long write_offset = 0;
 
     // Program stack.
     std::vector<Value> stack;
@@ -46,10 +67,7 @@ struct Processor {
 
     // Stack methods:
     template <typename T>
-    inline void pop_as(T &a);
-
-    template <typename T>
-    inline void pop2_as(T &a, T &b);
+    inline T pop_as();
 
     Processor();
 

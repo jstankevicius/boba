@@ -16,7 +16,7 @@ void show_ast(std::shared_ptr<AST> ast, int indent_level) {
     if (ast == NULL) return;
 
     for (int i = 0; i < indent_level; i++) std::cout << "   ";
-    std::cout << "AST(" << ast->string_value << ")" << std::endl;
+    std::cout << "AST(" << ast->string_value << ") " << (int)ast->type << std::endl;
 
     for (auto& child : ast->children) {
         show_ast(child, indent_level + 1);
@@ -88,8 +88,7 @@ std::shared_ptr<AST> Parser::parse_sexpr() {
 
     expect_token_string("(", tokens);
 
-    auto ast = std::make_shared<AST>(ASTType::Expr, tokens.front()->string_value);
-    expect_token_type(TokenType::Symbol, tokens);
+    auto ast = std::make_shared<AST>(ASTType::Expr);
     //check_valid_symbol(ast->string_value);
 
     while (tokens.front()->type != TokenType::Eof && tokens.front()->string_value != ")") {
@@ -118,6 +117,6 @@ std::shared_ptr<AST> Parser::parse_sexpr() {
         }
     }
     expect_token_string(")", tokens);
-    //show_ast(ast, 0);
+    //    show_ast(ast, 0);
     return ast;
 }

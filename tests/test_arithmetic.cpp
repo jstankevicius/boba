@@ -42,3 +42,4 @@ TEST_CASE("Simple compound operations: 2 + 3 * 4 == 14") {
 TEST_CASE("Simple compound operations: (12 / 4) + (3 - 2) == 4") {
     REQUIRE(eval_program<int>("(+ (/ 12 4) (- 3 2))") == 4);
 }
+

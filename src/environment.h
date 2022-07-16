@@ -10,6 +10,20 @@ struct Value {
     ValueType type;
     std::any value;
 
+    Value() {
+        
+    }
+    
+    Value(int v) {
+        type = ValueType::Int;
+        value = v;
+    }
+   
+    Value(bool v) {
+        type = ValueType::Bool;
+        value = v;
+    }
+    
     template <typename T> inline T as() {
         return std::any_cast<T>(value);
     }
