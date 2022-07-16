@@ -1,34 +1,48 @@
 #pragma once
 
-#include "bytecode.h"
-
+#include <any>
+#include <cstdint>
+#include <deque>
+#include <memory>
 #include <unordered_map>
 #include <vector>
-#include <optional>
+
+#include "ast.h"
+#include "environment.h"
+#include "processor.h"
+
 
 class Runtime {
 
 private:
+    Processor proc;
 
-    // Basically just a wrapper class around an unordered_map, renamed so it
-    // makes a little more sense contextually.
-    struct Scope {
-        std::unordered_map<std::string, Value> symbols;
-        inline void add_symbol(std::string name, Value &value);
-        inline bool exists_symbol(std::string name);
-    };
+    int var_counter = 0;
 
-    std::vector<Scope> scopes;
-    std::vector<Value> stack;
+    void emit_push_int(int i);
+    void emit_push_ref(std::string &name);
+    void emit_push(std::shared_ptr<AST> ast);
+    void emit_if(std::shared_ptr<AST> ast);
+    void emit_def(std::shared_ptr<AST> ast);
+    void emit_function(std::shared_ptr<AST> ast);
+    void emit_expr(std::shared_ptr<AST> ast);
 
 public:
 
-    inline void enter_scope();
-    inline void exit_scope();
-    inline void add_symbol(std::string name, Value &value);
-    inline bool exists_symbol(std::string name);
+    Runtime() {
+        proc.envs.push_back(Environment());
+        std::memset(proc.instructions, 0, PROC_INSTRUCTION_SIZE);
+    }
 
-    std::optional<Value> get_value(std::string name);
-    std::vector<Value> get_stack();
-    void execute(std::vector<Instruction> &instructions);
+    void eval_ast(std::shared_ptr<AST> ast);
+
+    template<typename T>
+    inline T get_stack_top() {
+        if (proc.stack.size() > 0)
+            return proc.stack.back().as<T>();
+        else {
+            printf("Runtime stack is empty!\n");
+            exit(-1);
+        }
+    }
 };
