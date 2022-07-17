@@ -1,11 +1,13 @@
 # 🧋Boba
 [![boba-tests](https://github.com/jstankevicius/boba/workflows/boba-tests/badge.svg)](https://github.com/jstankevicius/boba/actions)
 
-Boba is a simple Lisp dialect that runs on a stack machine with a custom bytecode instruction set. Boba's bytecode is quite compact, although this is typical for a stack machine - most instructions are 1 or 5 bytes long, depending on whether or not they take an integer as an argument. It's possible to shrink the upper bound even further, but that would require a lot of time and effort which could be spent on developing other language features.
+Boba is a simple Lisp dialect that runs on a stack machine with a custom bytecode instruction set. Boba's bytecode is quite compact, although this is typical for a stack machine - all instructions are either 1 or 5 bytes long, depending on whether or not they take an integer as an argument.
 
 The eventual goal of this project is to become a general-purpose Lisp dialect that can do most things that other programming languages can.
 
-## Building
+(Ignore the failing tests for now, they're being run on Ubuntu and I'm developing this on my M1 Mac :) )
+
+## Building and running the interpreter:
 Building and running Boba is really simple.
 
 Building the binary:
@@ -14,11 +16,37 @@ make
 ```
 
 Running a Boba program (the extension doesn't actually matter, the file just has to be encoded in ASCII):
+
+### file.boba
 ```
-build/boba file.boba
+; Find the n-th fibonacci number
+(defn fib (n)
+
+      ; If n == 0, return 0
+      (if (= n 0)
+          0
+
+          ; Else, if n == 1, return 1
+          (if (= n 1)
+              1
+
+              ; Else, if n == 2, return 1
+              (if (= n 2)
+                 1
+
+                 ; If not any of those, return fib(n - 1) + fib(n - 2)
+                 (+ (fib (- n 1)) (fib (- n 2)))))))
+
+(fib 9)
 ```
 
-Running tests:
+Run the binary:
+```
+$ build/boba file.boba
+34
+```
+
+## Running tests:
 ```
 make test
 ```
