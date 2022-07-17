@@ -15,7 +15,7 @@ make
 
 Running a Boba program (the extension doesn't actually matter, the file just has to be encoded in ASCII):
 ```
-build/stutter file.boba
+build/boba file.boba
 ```
 
 Running tests:
