@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <deque>
 #include <memory>
-
+#include <cassert>
 #include "token.h"
 
 // Macros:
