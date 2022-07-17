@@ -1,4 +1,5 @@
 # 🧋Boba
+[![boba-tests](https://github.com/jstankevicius/boba/workflows/boba-tests/badge.svg)](https://github.com/jstankevicius/boba/actions)
 
 Boba is a simple Lisp dialect that runs on a stack machine with a custom bytecode instruction set. Boba's bytecode is quite compact, although this is typical for a stack machine - most instructions are 1 or 5 bytes long, depending on whether or not they take an integer as an argument. It's possible to shrink the upper bound even further, but that would require a lot of time and effort which could be spent on developing other language features.
 
