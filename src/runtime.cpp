@@ -1,5 +1,6 @@
 #include "runtime.h"
 
+#include <cstring>
 #include <cstdarg>
 #include <iostream>
 #include <math.h>

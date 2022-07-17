@@ -61,6 +61,8 @@ void call(Processor &proc) {
     int var_index = mem_get<int>(proc.inst_head());
 
     printf("call %d\n", var_index);
+
+    // TODO: Don't look only in the global environment.
     int ip = proc.envs[0].memory[var_index].as<int>();
 
     // Create a new environment:

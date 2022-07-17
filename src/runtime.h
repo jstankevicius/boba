@@ -2,6 +2,7 @@
 
 #include <any>
 #include <cstdint>
+#include <cstring>
 #include <deque>
 #include <memory>
 #include <unordered_map>
