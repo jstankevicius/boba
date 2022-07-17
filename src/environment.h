@@ -4,7 +4,8 @@
 #include <unordered_map>
 #include <string>
 
-enum class ValueType { Int, Float, Str, Bool, Ref };
+enum class ValueType { Int, Float, Str, Bool, Function };
+
 
 struct Value {
     ValueType type;
@@ -23,7 +24,7 @@ struct Value {
         type = ValueType::Bool;
         value = v;
     }
-    
+
     template <typename T> inline T as() {
         return std::any_cast<T>(value);
     }

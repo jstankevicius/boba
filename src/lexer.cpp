@@ -249,7 +249,9 @@ Lexer::tokenize_stream(std::string &stream)  {
         // Comments. We'll just skip the rest of the line here.
         else if (cur_char() == ';') {
             advance_char(); // skip over #
-            while (cur_char() != '\r' && cur_char() != '\n') advance_char();
+            while (cur_char() != '\r' && cur_char() != '\n'
+                   && !done()) advance_char();
+            
             if (cur_char() == '\n')
                 advance_char();
             else if (cur_char() == '\r' && lookahead_char(1) == '\n') {

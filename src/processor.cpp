@@ -31,7 +31,7 @@ void jmp(Processor &proc) {
     int ip = mem_get<int>(proc.inst_head());
     proc.ip = ip;
 
-    printf("jmp %d\n", ip);
+    printf("jmp %02x\n", ip);
 }
 
 void jmp_true(Processor &proc) {
@@ -41,7 +41,7 @@ void jmp_true(Processor &proc) {
     proc.ip += sizeof(int);
     
     if (is_true) {
-        printf("jmp_true %d\n", ip);
+        printf("jmp_true %02x\n", ip);
         proc.ip = ip;
     }
 }
@@ -52,9 +52,30 @@ void jmp_false(Processor &proc) {
 
     proc.ip += sizeof(int);
     if (!is_true) {
-        printf("jmp_false %d\n", ip);
+        printf("jmp_false %02x\n", ip);
         proc.ip = ip;
     }
+}
+
+void call(Processor &proc) {
+    int var_index = mem_get<int>(proc.inst_head());
+
+    printf("call %d\n", var_index);
+    int ip = proc.envs[0].memory[var_index].as<int>();
+
+    // Create a new environment:
+    proc.envs.push_back(Environment());
+    proc.ip = ip;
+}
+
+void ret(Processor &proc) {
+    printf("ret\n");
+    Value ret_val = proc.stack[proc.stack.size() - 2];
+    int ret_ip = ret_val.as<int>();
+
+    proc.stack.erase(proc.stack.end() - 2); // ????
+    proc.ip = ret_ip;
+    proc.envs.pop_back();
 }
 
 void add(Processor &proc) {
@@ -70,7 +91,7 @@ void sub(Processor &proc) {
     int b = proc.pop_as<int>();
     proc.stack.push_back(Value(b - a));
 
-    printf("add\n");
+    printf("sub\n");
 }
 
 void mul(Processor &proc) {
@@ -78,7 +99,7 @@ void mul(Processor &proc) {
     int b = proc.pop_as<int>();
     proc.stack.push_back(Value(a * b));
 
-    printf("add\n");
+    printf("mul\n");
 }
 
 void div(Processor &proc) {
@@ -86,7 +107,7 @@ void div(Processor &proc) {
     int b = proc.pop_as<int>();
     proc.stack.push_back(Value(b / a));
 
-    printf("add\n");
+    printf("div\n");
 }
 
 void neg(Processor &proc) {
@@ -150,6 +171,8 @@ Processor::Processor() {
     INST_ENTRY(Instruction::Jmp, jmp);
     INST_ENTRY(Instruction::JmpTrue, jmp_true);
     INST_ENTRY(Instruction::JmpFalse, jmp_false);
+    INST_ENTRY(Instruction::Call, call);
+    INST_ENTRY(Instruction::Ret, ret);
     INST_ENTRY(Instruction::Eq, eq);
     INST_ENTRY(Instruction::Greater, greater);
     INST_ENTRY(Instruction::GreaterEq, greater_eq);
