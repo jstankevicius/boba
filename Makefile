@@ -1,7 +1,7 @@
 # This Makefile is a modified version of the one found on
 # https://makefiletutorial.com.
 
-MAIN_BINARY := stutter
+MAIN_BINARY := boba
 TEST_BINARY := run_tests
 
 BUILD_DIR   := ./build
