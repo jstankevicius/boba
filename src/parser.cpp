@@ -12,11 +12,11 @@
 
 
 // "Show" (display) the AST in std::cout. Used for debugging.
-void show_ast(std::shared_ptr<AST> ast, int indent_level) {
+void show_ast(std::unique_ptr<AST>& ast, int indent_level) {
     if (ast == NULL) return;
 
     for (int i = 0; i < indent_level; i++) std::cout << "   ";
-    std::cout << "AST(" << ast->string_value << ") " << (int)ast->type << std::endl;
+    std::cout << "AST(" << ast->token->string_value << ") " << (int)ast->type << std::endl;
 
     for (auto& child : ast->children) {
         show_ast(child, indent_level + 1);
@@ -26,7 +26,9 @@ void show_ast(std::shared_ptr<AST> ast, int indent_level) {
 
 // Expect the next token in the stream to have a particular string as
 // its contents. If not, fail with an error on the token.
-inline void expect_token_string(std::string str, std::deque<std::shared_ptr<Token>> &tokens) {
+inline void expect_token_string(std::string str,
+                                std::deque<std::shared_ptr<Token>> &tokens)
+{
     auto& token = tokens.front();
     if (token->string_value != str)
         err_token(token, "syntax error: expected '" + str + "', but got '"
@@ -84,30 +86,30 @@ void Parser::tokenize_string(std::string &str) {
 
 // Parse an s-expression from the token stream. An expression (for
 // now) is anything that is enclosed by parentheses.
-std::shared_ptr<AST> Parser::parse_sexpr() {
+std::unique_ptr<AST> Parser::parse_sexpr() {
 
+    auto ast = std::make_unique<AST>(ASTType::Expr, tokens.front());
     expect_token_string("(", tokens);
 
-    auto ast = std::make_shared<AST>(ASTType::Expr);
     //check_valid_symbol(ast->string_value);
 
     while (tokens.front()->type != TokenType::Eof && tokens.front()->string_value != ")") {
         auto& front = tokens.front();
 
         if (front->type == TokenType::Symbol) {
-            ast->add_leaf_child(ASTType::Symbol, front->string_value);
+            ast->add_leaf_child(ASTType::Symbol, front);
             expect_token_type(TokenType::Symbol, tokens);
         } else if (front->type == TokenType::StrLiteral) {
-            ast->add_leaf_child(ASTType::StrLiteral, front->string_value);
+            ast->add_leaf_child(ASTType::StrLiteral, front);
             expect_token_type(TokenType::StrLiteral, tokens);
         } else if (front->type == TokenType::IntLiteral) {
-            ast->add_leaf_child(ASTType::IntLiteral, front->string_value);
+            ast->add_leaf_child(ASTType::IntLiteral, front);
             expect_token_type(TokenType::IntLiteral, tokens);
         } else if (front->type == TokenType::FloatLiteral) {
-            ast->add_leaf_child(ASTType::FloatLiteral, front->string_value);
+            ast->add_leaf_child(ASTType::FloatLiteral, front);
             expect_token_type(TokenType::FloatLiteral, tokens);
         } else if (front->type == TokenType::BoolLiteral) {
-            ast->add_leaf_child(ASTType::BoolLiteral, front->string_value);
+            ast->add_leaf_child(ASTType::BoolLiteral, front);
             expect_token_type(TokenType::BoolLiteral, tokens);
         }
         else if (front->string_value == "(") {

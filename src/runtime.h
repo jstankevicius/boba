@@ -37,13 +37,13 @@ private:
     int var_counter = 0;
 
     void emit_push_int(int i);
-    void emit_push_ref(std::string &name);
-    void emit_push(std::shared_ptr<AST> ast);
-    void emit_if(std::shared_ptr<AST> ast);
-    void emit_def(std::shared_ptr<AST> ast);
-    void emit_defn(std::shared_ptr<AST> ast);
-    void emit_function(std::shared_ptr<AST> ast);
-    void emit_expr(std::shared_ptr<AST> ast);
+    void emit_push_ref(std::string& name);
+    void emit_push(std::unique_ptr<AST>& ast);
+    void emit_if(std::unique_ptr<AST>& ast);
+    void emit_def(std::unique_ptr<AST>& ast);
+    void emit_defn(std::unique_ptr<AST>& ast);
+    void emit_function(std::unique_ptr<AST>& ast);
+    void emit_expr(std::unique_ptr<AST>& ast);
 
     const std::unordered_map<std::string, BuiltinEntry> builtins = {
         { "+", BuiltinEntry(Instruction::Add, 2) },
@@ -69,7 +69,7 @@ public:
         std::memset(proc.instructions, 0, PROC_INSTRUCTION_SIZE);
     }
 
-    void eval_ast(std::shared_ptr<AST> ast);
+    void eval_ast(std::unique_ptr<AST>& ast);
 
     template<typename T>
     inline T get_stack_top() {

@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <vector>
@@ -20,23 +21,20 @@ enum class ASTType {
 
 struct AST {
     ASTType type;
-
-    // TODO: Maybe vector is too heavy-handed?
-    std::vector<std::shared_ptr<AST>> children;
-    
-    std::string string_value;
+    std::vector<std::unique_ptr<AST>> children;
+    std::shared_ptr<Token> token;
 
     AST(ASTType type) {
         this->type = type;
     }
 
-    AST(ASTType type, std::string string_value) {
+    AST(ASTType type, std::shared_ptr<Token> token) {
         this->type = type;
-        this->string_value = string_value;
+        this->token = token;
     }
 
     inline void
-    add_leaf_child(ASTType type, std::string string_value) {
-        children.push_back(std::make_shared<AST>(type, string_value));
+    add_leaf_child(ASTType type, std::shared_ptr<Token> token) {
+        children.push_back(std::make_unique<AST>(type, token));
     }
 };

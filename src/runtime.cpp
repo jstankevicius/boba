@@ -52,21 +52,20 @@ inline void Runtime::emit_push_ref(std::string &name) {
 }
 
 
-void Runtime::emit_push(std::shared_ptr<AST> ast) {
+void Runtime::emit_push(std::unique_ptr<AST>& ast) {
     switch (ast->type) {
     case ASTType::IntLiteral:
-        emit_push_int(std::stoi(ast->string_value));
+        emit_push_int(std::stoi(ast->token->string_value));
         break;
     case ASTType::Symbol:
-        emit_push_ref(ast->string_value);
+        emit_push_ref(ast->token->string_value);
         break;
     default:
         break;
     }
 }
 
-void Runtime::emit_expr(std::shared_ptr<AST> ast) {
-
+void Runtime::emit_expr(std::unique_ptr<AST>& ast) {
 
     if (ast->children.size() == 0) {
         if (ast->type == ASTType::Expr)
@@ -76,7 +75,7 @@ void Runtime::emit_expr(std::shared_ptr<AST> ast) {
             return;
         }
     }
-    auto& first = ast->children[0]->string_value;
+    auto& first = ast->children[0]->token->string_value;
     if (first == "def") {
         emit_def(ast);
     }
@@ -99,11 +98,11 @@ void Runtime::emit_expr(std::shared_ptr<AST> ast) {
 
 
 // Emit a function call.
-void Runtime::emit_function(std::shared_ptr<AST> ast) {
+void Runtime::emit_function(std::unique_ptr<AST>& ast) {
 
-    const std::string& fn_name = ast->children[0]->string_value;
-
+    std::string& fn_name = ast->children[0]->token->string_value;
     const int n_args = ast->children.size() - 1;
+    
     bool is_builtin = builtins.count(fn_name) > 0;
     long old_woff = proc.write_offset;
 
@@ -210,7 +209,7 @@ void Runtime::emit_function(std::shared_ptr<AST> ast) {
     }
 }
 
-void Runtime::emit_if(std::shared_ptr<AST> ast) {
+void Runtime::emit_if(std::unique_ptr<AST>& ast) {
 
     // Structure of an if statement in bytecode:
     //
@@ -220,9 +219,9 @@ void Runtime::emit_if(std::shared_ptr<AST> ast) {
     // jmp to after bytecode in else block
     // /*bytecode for else block */
 
-    auto condition = ast->children[1];
-    auto if_part = ast->children[2];
-    auto else_part = ast->children[3];
+    auto& condition = ast->children[1];
+    auto& if_part = ast->children[2];
+    auto& else_part = ast->children[3];
 
     // Emit bytecode for the condition:
     emit_expr(condition);
@@ -274,12 +273,12 @@ void Runtime::emit_if(std::shared_ptr<AST> ast) {
                  proc.instructions + old_woff + sizeof(Instruction));
 }
 
-void Runtime::emit_def(std::shared_ptr<AST> ast) {
+void Runtime::emit_def(std::unique_ptr<AST>& ast) {
     // Leftmost child is always the symbol name
     // TODO: error handling here, like for having too many child nodes
-    auto left = ast->children[1];
-    auto right = ast->children[2];
-    std::string symbol_name = left->string_value;
+    auto& left = ast->children[1];
+    auto& right = ast->children[2];
+    std::string symbol_name = left->token->string_value;
 
     emit_expr(right);
     
@@ -300,12 +299,12 @@ void Runtime::emit_def(std::shared_ptr<AST> ast) {
     proc.write_offset += sizeof(int);
 }
 
-void Runtime::emit_defn(std::shared_ptr<AST> ast) {
+void Runtime::emit_defn(std::unique_ptr<AST>& ast) {
     // This creates a new environment.
     proc.envs.push_back(Environment());
 
-    std::string &name = ast->children[1]->string_value;
-    auto param_list = ast->children[2];
+    std::string &name = ast->children[1]->token->string_value;
+    auto& param_list = ast->children[2];
 
     // Insert some bytecode instructions to store information about
     // the function. The first instruction stores the instruction
@@ -359,7 +358,7 @@ void Runtime::emit_defn(std::shared_ptr<AST> ast) {
     // emit store instructions for those arguments and store their
     // values into the new environment.
     for (int i = param_list->children.size() - 1; i >= 0; i--) {
-        auto child = param_list->children[i];
+        auto& child = param_list->children[i];
         
         // TODO: better error handling here
         if (child->type != ASTType::Symbol) {
@@ -367,7 +366,7 @@ void Runtime::emit_defn(std::shared_ptr<AST> ast) {
             exit(-1);
         }
 
-        std::string &param_name = child->string_value;
+        std::string &param_name = child->token->string_value;
         proc.envs.back().var_indices[param_name] = var_counter;
         
         mem_put<Instruction>(Instruction::Store, proc.write_head());
@@ -400,7 +399,7 @@ void Runtime::emit_defn(std::shared_ptr<AST> ast) {
     proc.envs.pop_back();
 }
 
-void Runtime::eval_ast(std::shared_ptr<AST> ast) {
+void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     long long old_woff = proc.write_offset;
     emit_expr(ast);
 
