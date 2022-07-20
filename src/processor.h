@@ -6,7 +6,9 @@
 
 #define PROC_INSTRUCTION_SIZE 1024
 
-enum class Instruction : unsigned char {
+using byte = unsigned char;
+
+enum class Instruction : byte {
 
     // Pushing stuff onto the stack:
     PushInt = 1,
@@ -22,10 +24,13 @@ enum class Instruction : unsigned char {
     // Store:
     Store,
 
-    // Jumps:
-    Jmp, // Absolute jump
+    // Relative jumps:
+    Jmp,
     JmpTrue,
     JmpFalse,
+
+    // Load a closure from the current environment and set the
+    // processor ip to the closure's ip.
     Call,
     
     // Return:
@@ -58,11 +63,12 @@ enum class Instruction : unsigned char {
 };
 
 struct Processor {
-    // Instruction pointer.
-    long ip = 0;
 
     // Instruction bytes.
-    unsigned char instructions[PROC_INSTRUCTION_SIZE];
+    byte instructions[PROC_INSTRUCTION_SIZE];
+
+    // Instruction pointer.
+    byte* ip = instructions;
 
     // Offset into the instruction buffer.
     long write_offset = 0;
@@ -73,6 +79,8 @@ struct Processor {
     // Environment stack.
     std::vector<Environment> envs;
 
+    std::vector<unsigned char*> call_stack;
+
     // Table of functions to jump to on each instruction.
     void (*jump_table[256])(Processor &proc);
 
@@ -82,42 +90,132 @@ struct Processor {
 
     Processor();
 
-    inline unsigned char* write_head() {
+    inline byte* write_head() {
         return instructions + write_offset;
-    }
-
-    inline unsigned char* inst_head() {
-        return instructions + ip;
-    }
-
-    inline unsigned char cur_byte() {
-        return instructions[ip];
     }
 
     void print_instructions() {
         printf("===========================================\n");
         int i = 0;
+        
         while (instructions[i] > 0) {
+            int int_val;
+
+            // Eagerly copy instructions[i+1] to int_val. The value
+            // might not make sense, but we'll only use it if we know
+            // the value is an integer anyway.
+            std::memcpy(&int_val, &instructions[i + 1], sizeof(int));
+            
             auto inst = static_cast<Instruction>(instructions[i]);
-            printf("%08x | %02x ", i, instructions[i]);
-            i++;
+            
+            printf("%p | ", &instructions[i]);
             
             switch (inst) {
             case Instruction::PushInt:
-            case Instruction::Store:
-            case Instruction::Jmp:
-            case Instruction::JmpTrue:
-            case Instruction::JmpFalse:
-            case Instruction::Call:
-                i+=4;
-                for (int j = i; j < i + 4; j++) {
-                    printf("%02x ", instructions[j]);
-                }
+                printf("push_int %d\n", int_val);
+                i += sizeof(Instruction) + sizeof(int);
                 break;
+
+            case Instruction::PushRef:
+                printf("push_ref %d\n", int_val);
+                i += sizeof(Instruction) + sizeof(int);
+                break;
+
+            case Instruction::Store:
+                printf("store %d\n", int_val);
+                i += sizeof(Instruction) + sizeof(int);
+                break;
+                
+            case Instruction::Jmp:
+                if (int_val >= 0)
+                    printf("jmp +%d (%p)\n", int_val, &instructions[i + int_val]);
+                else
+                    printf("jmp %d (%p)\n", int_val, &instructions[i + int_val]);
+                i += sizeof(Instruction) + sizeof(int);
+                break;
+                
+            case Instruction::JmpTrue:
+                if (int_val >= 0)
+                    printf("jmp_true +%d (%p)\n", int_val, &instructions[i + int_val]);
+                else
+                    printf("jmp_true %d (%p)\n", int_val, &instructions[i + int_val]);
+                i += sizeof(Instruction) + sizeof(int);
+                break;
+                
+            case Instruction::JmpFalse:
+                if (int_val >= 0)
+                    printf("jmp_false +%d (%p)\n", int_val, &instructions[i + int_val]);
+                else
+                    printf("jmp_false %d (%p)\n", int_val, &instructions[i + int_val]);
+                i += sizeof(Instruction) + sizeof(int);
+                break;
+                
+            case Instruction::Call:
+                printf("call %d\n", int_val);
+                i += sizeof(Instruction) + sizeof(int);
+                break;
+
+            case Instruction::Ret:
+                printf("ret\n");
+                i++;
+                break;
+
+            case Instruction::Eq:
+                printf("eq\n");
+                i++;
+                break;
+
+            case Instruction::Greater:
+                printf("greater\n");
+                i++;
+                break;
+
+            case Instruction::GreaterEq:
+                printf("greater_eq\n");
+                i++;
+                break;
+
+            case Instruction::Less:
+                printf("less\n");
+                i++;
+                break;
+
+            case Instruction::LessEq:
+                printf("less_eq\n");
+                i++;
+                break;
+
+            case Instruction::Add:
+                printf("add\n");
+                i++;
+                break;
+
+            case Instruction::Sub:
+                printf("sub\n");
+                i++;
+                break;
+
+            case Instruction::Mul:
+                printf("mul\n");
+                i++;
+                break;
+
+            case Instruction::Div:
+                printf("div\n");
+                i++;
+                break;
+
+            case Instruction::Neg:
+                printf("neg\n");
+                i++;
+                break;
+                
+                
             default:
+                printf("%02x\n", instructions[i]);
+                i++;
                 break;
             }
-            printf("\n");
         }
     }
 };

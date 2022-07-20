@@ -101,17 +101,12 @@ void Runtime::emit_expr(std::unique_ptr<AST>& ast) {
 void Runtime::emit_function(std::unique_ptr<AST>& ast) {
 
     std::string& fn_name = ast->children[0]->token->string_value;
+
     const int n_args = ast->children.size() - 1;
-    
     bool is_builtin = builtins.count(fn_name) > 0;
     long old_woff = proc.write_offset;
 
-    // If the function is not built in, allocate space for the
-    // instruction which pushes the current ip.
-    if (!is_builtin) {
-        proc.write_offset += sizeof(Instruction) + sizeof(int);
-    }
-    //First, add all the operands to the stack:
+    // First, add all the operands to the stack:
     for (int i = 1; i < ast->children.size(); i++) {
         auto &child = ast->children[i];
         if (child->type == ASTType::Expr)
@@ -127,6 +122,7 @@ void Runtime::emit_function(std::unique_ptr<AST>& ast) {
 
         // Won't insert a new element because we know the entry exists
         // already.
+
         BuiltinEntry entry = builtins.find(fn_name)->second;
         
         // Check special case for "-":
@@ -182,35 +178,15 @@ void Runtime::emit_function(std::unique_ptr<AST>& ast) {
         // Get the function's index and instruction pointer:
         int var_index = proc.envs.back().var_indices[fn_name];
 
-        // TODO: Check if correct number of arguments is supplied
-
-        // push arg1
-        // push arg2
-        // arg bytecode...
-        // push 
-        // call function
-        // RETURN HERE
-
+        // TODO: Check if correct number of arguments is supplied        
         mem_put<Instruction>(Instruction::Call, proc.write_head());
         proc.write_offset += sizeof(Instruction);
         mem_put<int>(var_index, proc.write_head());
         proc.write_offset += sizeof(int);
-
-        // The "push ip" instruction: goes before all the arguments
-        // are evaluated, and should point to the byte right after the
-        // call instruction.
-        mem_put<Instruction>(Instruction::PushInt,
-                             proc.instructions + old_woff);
-        
-        mem_put<int>(proc.write_offset,
-                     proc.instructions + old_woff + sizeof(Instruction));
-       
-
     }
 }
 
 void Runtime::emit_if(std::unique_ptr<AST>& ast) {
-
     // Structure of an if statement in bytecode:
     //
     // /* bytecode for condition expr */
@@ -248,8 +224,9 @@ void Runtime::emit_if(std::unique_ptr<AST>& ast) {
     mem_put<Instruction>(Instruction::JmpFalse,
                          proc.instructions + old_woff);
 
-    // Add else_woff as the argument to the JmpFalse.
-    mem_put<int>(else_woff,
+    // Add number of bytes emitted between else_woff and old_woff as
+    // an argument to jmp_false.
+    mem_put<int>(else_woff - old_woff - 1,
                  proc.instructions + old_woff + sizeof(Instruction));
 
     // Now save the write_offset again as old_woff. We're going to use
@@ -269,7 +246,7 @@ void Runtime::emit_if(std::unique_ptr<AST>& ast) {
     mem_put<Instruction>(Instruction::Jmp,
                          proc.instructions + old_woff);
     
-    mem_put<int>(proc.write_offset,
+    mem_put<int>(proc.write_offset - old_woff,
                  proc.instructions + old_woff + sizeof(Instruction));
 }
 
@@ -300,6 +277,16 @@ void Runtime::emit_def(std::unique_ptr<AST>& ast) {
 }
 
 void Runtime::emit_defn(std::unique_ptr<AST>& ast) {
+
+    // Bytecode structure for a defn:
+    // push ip
+    // store ip
+    // push n_args
+    // store n_args
+    // jmp to after the function body
+    // function body
+    // ret
+    
     // This creates a new environment.
     proc.envs.push_back(Environment());
 
@@ -402,7 +389,7 @@ void Runtime::emit_defn(std::unique_ptr<AST>& ast) {
 void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     long long old_woff = proc.write_offset;
     emit_expr(ast);
-
+    
     // TODO: Implement some kind of error flag that we can set during
     // bytecode generation. At this point, we should check the error
     // flag and potentially zero out all the bytecode we just
@@ -410,17 +397,15 @@ void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
 
     // Print instructions:
 
-    /*
-    for (int i = old_woff; i < proc.write_offset; i++) {
-        printf("%02x: %02x\n", i, proc.instructions[i]);
-    }
-    printf("\n");
-    */
-
+    proc.print_instructions();
+    printf("Running bytecode...\n");
+    
     // Run until we hit a 0 byte
     try {
-        while (proc.cur_byte()) {
-            unsigned char inst = proc.cur_byte();
+        while (*proc.ip) {
+
+            printf("ip: %p\n", proc.ip);
+            unsigned char inst = *proc.ip;
             // Normally we'd expect the instruction pointer to be
             // incremented after the instruction is executed. Doing it
             // this way lets the jumped-to function immediately read any
@@ -441,7 +426,7 @@ void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
             printf("\n");
         }
     }
-
+    
     //printf("Instruction size: %lld bytes\n", proc.write_offset - old_woff);
 
     //proc.print_instructions();

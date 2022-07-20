@@ -1,21 +1,7 @@
 ; Find the n-th fibonacci number
-(defn fib (n)
+(if (= 2 3)
+    (+ 2 3) ; if 2==3, push 5
+    (+ 1 1))  ; else, push 2
 
-      ; If n == 0, return 0
-      (if (= n 0)
-          0
-
-          ; Else, if n == 1, return 1
-          (if (= n 1)
-              1
-
-              ; Else, if n == 2, return 1
-              (if (= n 2)
-                 1
-
-                 ; If not any of those, return fib(n - 1) + fib(n - 2)
-                 (+ (fib (- n 1)) (fib (- n 2)))))))
-      
-
-(fib 9) ; Should be 34
-      
+; We should be pushing 2
+    
