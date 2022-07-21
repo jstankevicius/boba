@@ -1,0 +1,3 @@
+(def addto (fn (x) (fn (y) (+ x y))))
+(def plus4 (addto 4))
+(plus4 1)
