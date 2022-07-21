@@ -5,8 +5,6 @@ Boba is a simple Lisp dialect that runs on a stack machine with a custom bytecod
 
 The eventual goal of this project is to become a general-purpose Lisp dialect that can do most things that other programming languages can.
 
-(Ignore the failing tests for now, they're being run on Ubuntu and I'm developing this on my M1 Mac :) )
-
 ## Building and running the interpreter:
 Building and running Boba is really simple.
 
