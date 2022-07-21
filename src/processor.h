@@ -1,7 +1,9 @@
 #pragma once
 
-#include <vector>
 #include <cstring>
+#include <memory>
+#include <vector>
+
 #include "environment.h"
 
 #define PROC_INSTRUCTION_SIZE 1024
