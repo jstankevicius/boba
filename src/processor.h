@@ -29,20 +29,10 @@ enum class Instruction : byte {
     Jmp = 9,
     JmpTrue = 10,
     JmpFalse = 11,
-
-    // Load a closure from the current environment and set the
-    // processor ip to the closure's ip.
+    
     Call = 12,
-
     CreateClosure = 13,
     
-    // Return:
-    // NOTE: Ret is a special function because it's the only one that
-    // doesn't operate on the top of the stack. Since ret is only
-    // called after a function has finished execution (and the
-    // function probably returns something, leaving its result on the
-    // top of the stack), it needs access to the element directly
-    // below the top of the stack (its return address).
     Ret = 14,
 
     // Logic:

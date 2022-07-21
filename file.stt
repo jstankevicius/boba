@@ -1,9 +1,0 @@
-; Find the n-th fibonacci number
-; Find the n-th fibonacci number
-(def abs (fn (n)
-  (if (>= n 0) n (- n))))
-  
-(abs 2)
-(abs 3)
-
-; We should see 2, then 3
