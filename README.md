@@ -17,10 +17,10 @@ make
 
 Running a Boba program (the extension doesn't actually matter, the file just has to be encoded in ASCII):
 
-### file.boba
+### fib.boba
 ```
 ; Find the n-th fibonacci number
-(defn fib (n)
+(def fib (fn (n)
 
       ; If n == 0, return 0
       (if (= n 0)
@@ -35,14 +35,14 @@ Running a Boba program (the extension doesn't actually matter, the file just has
                  1
 
                  ; If not any of those, return fib(n - 1) + fib(n - 2)
-                 (+ (fib (- n 1)) (fib (- n 2)))))))
+                 (+ (fib (- n 1)) (fib (- n 2))))))))
 
 (fib 9)
 ```
 
 Run the binary:
 ```
-$ build/boba file.boba
+$ build/boba fib.boba
 34
 ```
 
