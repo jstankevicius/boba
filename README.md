@@ -15,6 +15,14 @@ make
 
 Running a Boba program (the extension doesn't actually matter, the file just has to be encoded in ASCII):
 
+```
+$ build/boba yourfile.boba
+```
+
+
+## Feature Examples
+**Recursion!** As any normal programming language should, Boba supports recursion. Recursive calls are currently not tail-call optimized, although that is a feature that will be implemented at some point in the future.
+
 ### fib.boba
 ```
 ; Find the n-th fibonacci number
@@ -38,10 +46,23 @@ Running a Boba program (the extension doesn't actually matter, the file just has
 (fib 9)
 ```
 
-Run the binary:
 ```
 $ build/boba fib.boba
 34
+```
+
+**Closures and first-class function support!** A core feature of many Lisp languages, functions being first-class objects means they can be returned from and passed to functions. Functions (or rather, closures) are not simply instruction routines - they are actual runtime objects with an entire enclosing environment. This allows for the creation of, for example, functions that return other functions.
+
+### closure.boba
+```
+(def addto (fn (x) (fn (y) (+ x y))))
+(def plus4 (addto 4))
+(plus4 1)
+```
+
+```
+$ build/boba closure.boba
+5
 ```
 
 ## Running tests:
