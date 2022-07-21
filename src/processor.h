@@ -5,33 +5,34 @@
 #include "environment.h"
 
 #define PROC_INSTRUCTION_SIZE 1024
-
 using byte = unsigned char;
 
 enum class Instruction : byte {
 
     // Pushing stuff onto the stack:
     PushInt = 1,
-    PushStr,
-    PushFloat,
-    PushRef,
+    PushStr = 2,
+    PushFloat = 3,
+    PushRef = 4,
     
-    PushTrue,
-    PushFalse,
+    PushTrue = 5,
+    PushFalse = 6,
     
-    PushNil,
+    PushNil = 7,
 
     // Store:
-    Store,
+    Store = 8,
 
     // Relative jumps:
-    Jmp,
-    JmpTrue,
-    JmpFalse,
+    Jmp = 9,
+    JmpTrue = 10,
+    JmpFalse = 11,
 
     // Load a closure from the current environment and set the
     // processor ip to the closure's ip.
-    Call,
+    Call = 12,
+
+    CreateClosure = 13,
     
     // Return:
     // NOTE: Ret is a special function because it's the only one that
@@ -40,26 +41,26 @@ enum class Instruction : byte {
     // function probably returns something, leaving its result on the
     // top of the stack), it needs access to the element directly
     // below the top of the stack (its return address).
-    Ret,
+    Ret = 14,
 
     // Logic:
-    Not,
-    And,
-    Or,
+    Not = 15,
+    And = 16,
+    Or = 17,
 
     // Comparison:
-    Eq,
-    Greater,
-    GreaterEq,
-    Less,
-    LessEq,
+    Eq = 18,
+    Greater = 19,
+    GreaterEq = 20,
+    Less = 21,
+    LessEq = 22,
 
     // Arithmetic:
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Neg,
+    Add = 23,
+    Sub = 24,
+    Mul = 25,
+    Div = 26,
+    Neg = 27,
 };
 
 struct Processor {
@@ -74,11 +75,14 @@ struct Processor {
     long write_offset = 0;
 
     // Program stack.
-    std::vector<Value> stack;
+    // TODO: Rename to value_stack or something.
+    std::vector<std::shared_ptr<Value>> stack;
 
     // Environment stack.
-    std::vector<Environment> envs;
+    std::vector<std::unordered_map<int, std::shared_ptr<Value>>> envs;
 
+    // All our instruction pointers are put here before we jump to
+    // another function.
     std::vector<unsigned char*> call_stack;
 
     // Table of functions to jump to on each instruction.
@@ -94,11 +98,10 @@ struct Processor {
         return instructions + write_offset;
     }
 
-    void print_instructions() {
+    void print_instructions(int start) {
         printf("===========================================\n");
-        int i = 0;
         
-        while (instructions[i] > 0) {
+        for (int i = start; i < write_offset;) {
             int int_val;
 
             // Eagerly copy instructions[i+1] to int_val. The value
@@ -127,31 +130,57 @@ struct Processor {
                 break;
                 
             case Instruction::Jmp:
-                if (int_val >= 0)
-                    printf("jmp +%d (%p)\n", int_val, &instructions[i + int_val]);
+                if (int_val > 0)
+                    printf("jmp +%d (%d @ %p)\n",
+                           int_val,
+                           instructions[i + int_val],
+                           &instructions[i + int_val]);
                 else
-                    printf("jmp %d (%p)\n", int_val, &instructions[i + int_val]);
+                    printf("jmp %d (%d @ %p)\n",
+                           int_val,
+                           instructions[i + int_val],
+                           &instructions[i + int_val]);
+                
                 i += sizeof(Instruction) + sizeof(int);
                 break;
                 
             case Instruction::JmpTrue:
                 if (int_val >= 0)
-                    printf("jmp_true +%d (%p)\n", int_val, &instructions[i + int_val]);
+                    printf("jmp_true +%d (%d @ %p)\n",
+                           int_val,
+                           instructions[i + int_val],
+                           &instructions[i + int_val]);
                 else
-                    printf("jmp_true %d (%p)\n", int_val, &instructions[i + int_val]);
+                    printf("jmp_true %d (%d @ %p)\n",
+                           int_val,
+                           instructions[i + int_val],
+                           &instructions[i + int_val]);
+                
                 i += sizeof(Instruction) + sizeof(int);
                 break;
                 
             case Instruction::JmpFalse:
                 if (int_val >= 0)
-                    printf("jmp_false +%d (%p)\n", int_val, &instructions[i + int_val]);
+                    printf("jmp_false +%d (%d @ %p)\n",
+                           int_val,
+                           instructions[i + int_val],
+                           &instructions[i + int_val]);
                 else
-                    printf("jmp_false %d (%p)\n", int_val, &instructions[i + int_val]);
+                    printf("jmp_false %d (%d @ %p)\n",
+                           int_val,
+                           instructions[i + int_val],
+                           &instructions[i + int_val]);
+                
                 i += sizeof(Instruction) + sizeof(int);
                 break;
                 
             case Instruction::Call:
                 printf("call %d\n", int_val);
+                i += sizeof(Instruction) + sizeof(int);
+                break;
+
+            case Instruction::CreateClosure:
+                printf("create_closure %d\n", int_val);
                 i += sizeof(Instruction) + sizeof(int);
                 break;
 
@@ -209,10 +238,9 @@ struct Processor {
                 printf("neg\n");
                 i++;
                 break;
-                
-                
+                                
             default:
-                printf("%02x\n", instructions[i]);
+                printf("(unknown) %02x\n", instructions[i]);
                 i++;
                 break;
             }

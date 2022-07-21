@@ -25,14 +25,14 @@ inline void Runtime::emit_push_int(int i) {
 }
 
 
-// Emite a push_ref instruction for a symbol with name `name`.
+// Emit a push_ref instruction for a symbol with name `name`.
 inline void Runtime::emit_push_ref(std::string &name) {
     // Figure out this ref's index. Start at the current environment
     // and go back up the stack, looking for the name. If not found,
     // error out.
     int var_index = -1;
-    for (int i = proc.envs.size() - 1; i >= 0; i--) {
-        auto& var_indices = proc.envs[i].var_indices;
+    for (int i = scopes.size() - 1; i >= 0; i--) {
+        auto& var_indices = scopes[i].var_indices;
         if (var_indices.count(name) > 0) {
             var_index = var_indices[name];
             break;
@@ -84,21 +84,21 @@ void Runtime::emit_expr(std::unique_ptr<AST>& ast) {
         emit_if(ast);
     }
 
-    else if (first == "defn") {
-        emit_defn(ast);
+    else if (first == "fn") {
+        emit_fn(ast);
     }
 
     // For now, everything that isn't a def will just be assumed to be
     // an arithmetic expression. We'll need to start handling defuns
     // soon.
     else {
-        emit_function(ast);
+        emit_call(ast);
     }
 }
 
 
 // Emit a function call.
-void Runtime::emit_function(std::unique_ptr<AST>& ast) {
+void Runtime::emit_call(std::unique_ptr<AST>& ast) {
 
     std::string& fn_name = ast->children[0]->token->string_value;
 
@@ -176,7 +176,19 @@ void Runtime::emit_function(std::unique_ptr<AST>& ast) {
     // instruction.
     else {
         // Get the function's index and instruction pointer:
-        int var_index = proc.envs.back().var_indices[fn_name];
+        int var_index = -1;
+        
+        for (int i = scopes.size() - 1; i >= 0; i--) {
+            if (scopes[i].var_indices.find(fn_name) != scopes[i].var_indices.end()) {
+                var_index = scopes[i].var_indices.find(fn_name)->second;
+                break;
+            }
+        }
+        
+        if (var_index == -1) {
+            printf("Undefined function '%s'\n", fn_name.c_str());
+            exit(-1);
+        }
 
         // TODO: Check if correct number of arguments is supplied        
         mem_put<Instruction>(Instruction::Call, proc.write_head());
@@ -226,7 +238,7 @@ void Runtime::emit_if(std::unique_ptr<AST>& ast) {
 
     // Add number of bytes emitted between else_woff and old_woff as
     // an argument to jmp_false.
-    mem_put<int>(else_woff - old_woff - 1,
+    mem_put<int>(else_woff - old_woff,
                  proc.instructions + old_woff + sizeof(Instruction));
 
     // Now save the write_offset again as old_woff. We're going to use
@@ -245,7 +257,9 @@ void Runtime::emit_if(std::unique_ptr<AST>& ast) {
     // jump to skip over the else block if it ever gets executed.
     mem_put<Instruction>(Instruction::Jmp,
                          proc.instructions + old_woff);
-    
+
+    // TODO: I feel like this is broken. Why is this not an off by 1
+    // error?
     mem_put<int>(proc.write_offset - old_woff,
                  proc.instructions + old_woff + sizeof(Instruction));
 }
@@ -256,90 +270,51 @@ void Runtime::emit_def(std::unique_ptr<AST>& ast) {
     auto& left = ast->children[1];
     auto& right = ast->children[2];
     std::string symbol_name = left->token->string_value;
+    
+    // Look for symbol in this environment
+    if (scopes.back().var_indices.count(symbol_name) > 0) {
+        // TODO: Symbol is already defined in this environent; fail.
+    }
+    int var_number = var_counter;
 
+    // We will consider the symbol "defined" before we even figure out
+    // what the symbol is bound to. This avoids bugs when parsing
+    // recursive functions.
+    scopes.back().var_indices[symbol_name] = var_number;
+    
+    var_counter++;
+    
     emit_expr(right);
     
     mem_put<Instruction>(Instruction::Store, proc.write_head());
     proc.write_offset += sizeof(Instruction);
 
-    // Now figure out the variable number
-    int var_number = var_counter;
-
-    // Look for symbol in this environment
-    if (proc.envs.back().var_indices.count(symbol_name) > 0) {
-        // TODO: Symbol is already defined in this environent; fail.
-    }
-
-    proc.envs.back().var_indices[symbol_name] = var_number;
-    mem_put<int>(var_counter, proc.write_head());
-    var_counter++;
+    mem_put<int>(var_number, proc.write_head());
     proc.write_offset += sizeof(int);
 }
 
-void Runtime::emit_defn(std::unique_ptr<AST>& ast) {
-
-    // Bytecode structure for a defn:
-    // push ip
-    // store ip
-    // push n_args
-    // store n_args
-    // jmp to after the function body
-    // function body
+void Runtime::emit_fn(std::unique_ptr<AST>& ast) {
+    
+    // Bytecode for emitting an fn:
+    // jmp to create_closure instruction
+    // load arg1 <- actual closure code begins here
+    // load arg2
+    // ...exprs...
     // ret
+    // create_closure -- copies the entire current environment (NOT
+    // the pointer!), makes a shared_ptr to it, and creates a closure
+    // that possesses the shared_Ptr
     
-    // This creates a new environment.
-    proc.envs.push_back(Environment());
+    // This creates a new scope.
+    scopes.push_back(Scope());
 
-    std::string &name = ast->children[1]->token->string_value;
-    auto& param_list = ast->children[2];
+    auto& param_list = ast->children[1];
 
-    // Insert some bytecode instructions to store information about
-    // the function. The first instruction stores the instruction
-    // pointer of this function in the processor's memory. The second
-    // stores the number of arguments this instruction takes in the
-    // next entry in memory. The third is a jump instruction that
-    // allows us to jump past the function definition without
-    // executing it.
     long old_woff = proc.write_offset;
-    long jmp_woff = proc.write_offset
-        + 4*(sizeof(Instruction) + sizeof(int));
 
-    mem_put<Instruction>(Instruction::PushInt, proc.write_head());
-    proc.write_offset += sizeof(Instruction);
-
-    // The ip to which we jump to will be exactly 6 instructions ahead
-    // of old_woff.
-    mem_put<int>(old_woff + 5*(sizeof(Instruction) + sizeof(int)),
-                 proc.write_head());
-
-    // Store reference to this function in outer environment:
-    proc.envs[proc.envs.size() - 1].var_indices[name] = var_counter;
-    proc.write_offset += sizeof(int);
-    
-    // Now store the ip in memory:
-    mem_put<Instruction>(Instruction::Store, proc.write_head());
-    proc.write_offset += sizeof(Instruction);
-    mem_put<int>(var_counter, proc.write_head());
-    proc.write_offset += sizeof(int);
-    var_counter++;
-    
-    // Now push the number of arguments:
-    mem_put<Instruction>(Instruction::PushInt, proc.write_head());
-    proc.write_offset += sizeof(Instruction);
-    mem_put<int>(param_list->children.size(), proc.write_head());
-    proc.write_offset += sizeof(int);
-
-    // Store n_args in memory location right after the ip
-    mem_put<Instruction>(Instruction::Store, proc.write_head());
-    proc.write_offset += sizeof(Instruction);
-    mem_put<int>(var_counter, proc.write_head());
-    proc.write_offset += sizeof(int);
-    var_counter++;
-
-    // Allocate space for the jmp instruction:
-    proc.write_offset += sizeof(Instruction);
-    proc.write_offset += sizeof(int);
-    
+    // Allocate space for jump instruction
+    proc.write_offset += sizeof(Instruction) + sizeof(int);
+        
     // It is assumed that when we make a function call, all the
     // arguments are pushed onto the stack before the jump. Here we
     // emit store instructions for those arguments and store their
@@ -354,7 +329,7 @@ void Runtime::emit_defn(std::unique_ptr<AST>& ast) {
         }
 
         std::string &param_name = child->token->string_value;
-        proc.envs.back().var_indices[param_name] = var_counter;
+        scopes.back().var_indices[param_name] = var_counter;
         
         mem_put<Instruction>(Instruction::Store, proc.write_head());
         proc.write_offset += sizeof(Instruction);
@@ -364,26 +339,43 @@ void Runtime::emit_defn(std::unique_ptr<AST>& ast) {
         
         var_counter++;
     }
-
+    
     // Now go through the rest of the expressions in the function and
     // emit bytecode for them.
-    for (int i = 3; i < ast->children.size(); i++)
+    for (int i = 2; i < ast->children.size(); i++)
         emit_expr(ast->children[i]);
-
+    
     // Lastly, emit the ret instruction:
     mem_put<Instruction>(Instruction::Ret, proc.write_head());
     proc.write_offset += sizeof(Instruction);
 
+    mem_put<Instruction>(Instruction::CreateClosure,
+                         proc.write_head());
+    proc.write_offset += sizeof(Instruction);
+
+    int code_beg_woff = old_woff + sizeof(Instruction)
+        + sizeof(int);
+
+    int code_end_woff = proc.write_offset - sizeof(Instruction);
+    
+    mem_put<int>(code_end_woff - code_beg_woff,
+                 proc.write_head());
+    
+    proc.write_offset += sizeof(int);
+    
     // Now go back to the beginning and add the jmp that skips over
     // the function body.
     mem_put<Instruction>(Instruction::Jmp,
-                         proc.instructions + jmp_woff);
+                         proc.instructions + old_woff);
     
-    mem_put<int>(proc.write_offset,
-                 proc.instructions + jmp_woff + sizeof(Instruction));
-
-    // Destroy current environment:
-    proc.envs.pop_back();
+    mem_put<int>(proc.write_offset
+                 - old_woff
+                 - sizeof(Instruction)
+                 - sizeof(int),
+                 proc.instructions + old_woff + sizeof(Instruction));
+    
+    // Destroy current scope:
+    scopes.pop_back();
 }
 
 void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
@@ -395,22 +387,14 @@ void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     // flag and potentially zero out all the bytecode we just
     // generated if we know it is invalid.
 
-    // Print instructions:
-
-    proc.print_instructions();
+    proc.print_instructions(old_woff);
+    printf("==============================================\n");
     printf("Running bytecode...\n");
     
     // Run until we hit a 0 byte
     try {
         while (*proc.ip) {
-
-            printf("ip: %p\n", proc.ip);
             unsigned char inst = *proc.ip;
-            // Normally we'd expect the instruction pointer to be
-            // incremented after the instruction is executed. Doing it
-            // this way lets the jumped-to function immediately read any
-            // arguments from memory without having to increment ip.
-            proc.ip++;
             proc.jump_table[inst](proc);
         }
     }
@@ -419,7 +403,7 @@ void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
         printf("RUNTIME ERROR\n");
         printf("Stack state:\n");
         for (int i = proc.stack.size() - 1; i >= 0; i--) {
-            printf("%d ", proc.stack.back().as<int>());
+            printf("%d ", proc.stack.back()->as<int>());
             if (i == proc.stack.size() - 1)
                 printf("<-------- top of stack");
 
@@ -429,10 +413,16 @@ void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     
     //printf("Instruction size: %lld bytes\n", proc.write_offset - old_woff);
 
-    //proc.print_instructions();
+    // proc.print_instructions();
     if (proc.stack.size() > 0)
-        printf("Stack top: %d\n", proc.stack.back().as<int>());
-    
+        printf("Stack top: %d\n", proc.stack.back()->as<int>());
+    else
+        printf("Stack top: nil\n");
 
-    //    proc.stack.clear();
+    printf("Call stack:\n");
+    for (int i = 0; i < proc.call_stack.size(); i++) {
+        printf("%p\n", proc.call_stack[i]);
+    }
+
+    //proc.stack.clear();
 }

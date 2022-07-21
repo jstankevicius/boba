@@ -1,0 +1,19 @@
+; Find the n-th fibonacci number
+(def fib (fn (n)
+
+      ; If n == 0, return 0
+      (if (= n 0)
+          0
+
+          ; Else, if n == 1, return 1
+          (if (= n 1)
+              1
+
+              ; Else, if n == 2, return 1
+              (if (= n 2)
+                 1
+
+                 ; If not any of those, return fib(n - 1) + fib(n - 2)
+                 (+ (fib (- n 1)) (fib (- n 2))))))))
+
+(fib 9)

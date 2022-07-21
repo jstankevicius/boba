@@ -28,12 +28,17 @@ struct BuiltinEntry {
     }
 };
 
+struct Scope {
+    std::unordered_map<std::string, int> var_indices;
+};
+
 
 class Runtime {
 
 private:
     Processor proc;
 
+    std::vector<Scope> scopes;
     int var_counter = 0;
 
     void emit_push_int(int i);
@@ -41,8 +46,8 @@ private:
     void emit_push(std::unique_ptr<AST>& ast);
     void emit_if(std::unique_ptr<AST>& ast);
     void emit_def(std::unique_ptr<AST>& ast);
-    void emit_defn(std::unique_ptr<AST>& ast);
-    void emit_function(std::unique_ptr<AST>& ast);
+    void emit_fn(std::unique_ptr<AST>& ast);
+    void emit_call(std::unique_ptr<AST>& ast);
     void emit_expr(std::unique_ptr<AST>& ast);
 
     const std::unordered_map<std::string, BuiltinEntry> builtins = {
@@ -65,7 +70,8 @@ private:
 public:
 
     Runtime() {
-        proc.envs.push_back(Environment());
+        scopes.push_back(Scope());
+        proc.envs.push_back(std::unordered_map<int, std::shared_ptr<Value>>());
         std::memset(proc.instructions, 0, PROC_INSTRUCTION_SIZE);
     }
 
@@ -74,7 +80,7 @@ public:
     template<typename T>
     inline T get_stack_top() {
         if (proc.stack.size() > 0)
-            return proc.stack.back().as<T>();
+            return proc.stack.back()->as<T>();
         else {
             printf("Runtime stack is empty!\n");
             exit(-1);

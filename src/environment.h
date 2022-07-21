@@ -4,8 +4,7 @@
 #include <unordered_map>
 #include <string>
 
-enum class ValueType { Int, Float, Str, Bool, Function };
-
+enum class ValueType { Int, Float, Str, Bool, Closure };
 
 struct Value {
     ValueType type;
@@ -31,10 +30,15 @@ struct Value {
 };
 
 
-struct Environment {
+struct Closure {
+    int n_args;
 
-    // "Memory" for getting the value of a variable based on its
-    // index.
-    std::unordered_map<int, Value> memory;
-    std::unordered_map<std::string, int> var_indices;
+    // TODO: byte instructions[SOME_CONSTANT];
+    unsigned char instructions[1024];
+
+    // Environment that gets loaded onto the environment stack upon
+    // this closure's call.
+    std::unordered_map<int, std::shared_ptr<Value>> env;
 };
+
+
