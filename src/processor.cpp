@@ -1,4 +1,7 @@
 #include "processor.h"
+
+#include <memory>
+
 #include "environment.h"
 
 #define INST_ENTRY(id, fun) (jump_table[(unsigned long) id] = fun)
