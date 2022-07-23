@@ -70,4 +70,4 @@ $ build/boba closure.boba
 make test
 ```
 
-Boba uses a very simple testing procedure where it will compile and run expressions while checking their result against an expected result. The repository used to ship with the single-include Catch2 header, but I eventually decided that an 18,000-line header file is overkill for the kind of testing that we'll be doing.
+Boba tests simply compile and run expressions while checking them against the expected result. The repository used to ship with the single-include Catch2 header, but I eventually decided that an 18,000-line header file is overkill for the kind of testing that we'll be doing.
