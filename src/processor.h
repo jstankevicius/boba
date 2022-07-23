@@ -6,8 +6,7 @@
 
 #include "environment.h"
 
-// TODO: Make this dynamic
-#define PROC_INSTRUCTION_SIZE 8192
+#define PROC_INSTRUCTION_SIZE 65535
 using byte = unsigned char;
 
 enum class Instruction : byte {

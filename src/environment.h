@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <string>
 
+#define CLOSURE_INSTRUCTION_SIZE 4096
+
 enum class ValueType { Nil, Int, Float, Str, Bool, Closure };
 
 struct Value {
@@ -50,8 +52,7 @@ struct Value {
 struct Closure {
     int n_args;
 
-    // TODO: byte instructions[SOME_CONSTANT];
-    unsigned char instructions[8192];
+    unsigned char instructions[CLOSURE_INSTRUCTION_SIZE];
 
     // Environment that gets loaded onto the environment stack upon
     // this closure's call.

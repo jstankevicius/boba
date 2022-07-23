@@ -403,6 +403,23 @@ std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast) {
         }
     }
 
+    // Expressions that cannot possibly be referenced later in the
+    // program (i.e. literally anything that is not a def or defn
+    // (possibly others) can simply have their instructions zeroed
+    // out to free up space.
+    if (ast->children.size() > 0) {
+        auto form = ast->children[0]->token->string_value;
+        if (form != "def") {
+            std::memset(proc.instructions + old_woff,
+                        0,
+                        proc.write_offset - old_woff);
+
+            // Reset instruction pointer:
+            proc.write_offset = old_woff;
+            proc.ip = proc.instructions + proc.write_offset;
+        }
+    }
+
     //printf("Executed %ld instructions\n", inst_count);
     // proc.print_instructions();
     if (proc.stack.size() > 0) {

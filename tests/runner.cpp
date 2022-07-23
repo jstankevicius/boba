@@ -19,8 +19,8 @@ public:
     void tokenize_string(std::string str) {
         parser.tokenize_string(str);
     }
-    // Evaluates a single expression (if multiple expressions exist in
-    // the input string, only the top one is evaluated
+
+    
     std::shared_ptr<Value> eval_expr() {
         auto ast = parser.parse_sexpr();
         return runtime.eval_ast(ast);
