@@ -1,12 +1,10 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <deque>
 
 #include "lexer.h"
 #include "parser.h"
 #include "runtime.h"
-#include "util.h"
 #include <memory>
 
 
@@ -79,4 +77,7 @@ int main() {
     printf("===================================================\n");
     printf("Test run complete: Successes: %d, failures: %d, "
            "total: %d\n", successes, failures, successes + failures);
+
+    if (failures > 0)
+        exit(-1);
 }
