@@ -1,0 +1,334 @@
+; Addition operator tests:
+
+;;name=addition-test-1
+(+ 0 0)
+;;=>0
+
+
+;;name=addition-test-2
+(+ 2 2)
+;;=>4
+
+
+;;name=addition-test-3
+(+ 1 -1)
+;;=>0
+
+
+;;name=addition-test-4
+(+ 1 (+ 2 3))
+;;=>6
+
+
+;;name=addition-test-5
+(+ (+ -28 -65) 93)
+;;=>0
+
+
+;;name=addition-test-6
+(+ (+ 36 80) 54)
+;;=>170
+
+
+;;name=addition-test-7
+(+ 86 (+ 75 -16))
+;;=>145
+
+
+;;name=addition-test-8
+(+ (+ 56 63) -48)
+;;=>71
+
+
+;;name=addition-test-9
+(+ (+ 40 -97) -77)
+;;=>-134
+
+
+;;name=addition-test-10
+(+ (+ -15 -38) (+ -84 -52))
+;;=>-189
+
+
+;;name=addition-test-11
+(+ -64 (+ -19 30))
+;;=>-53
+
+
+;;name=addition-test-12
+(+ 41 (+ 40 -15))
+;;=>66
+
+
+;;name=addition-test-13
+(+ (+ 52 -2) (+ -26 -53))
+;;=>-29
+
+
+;;name=addition-test-14
+(+ (+ 68 -34) (+ 73 93))
+;;=>200
+
+
+;;name=addition-test-15
+(+ (+ -28 -66) -79)
+;;=>-173
+
+
+
+; Subtraction operator tests:
+;;name=subtraction-test-1
+(- 1 1)
+;;=>0
+
+
+;;name=subtraction-test-2
+(- 8 1)
+;;=>7
+
+
+;;name=subtraction-test-3
+(- 10 10)
+;;=>0
+
+
+;;name=subtraction-test-4
+(- 8 7)
+;;=>1
+
+
+;;name=subtraction-test-5
+(- 3 2)
+;;=>1
+
+
+;;name=subtraction-test-6
+(- -1 -10)
+;;=>9
+
+
+;;name=subtraction-test-7
+(- -6 -4)
+;;=>-2
+
+
+;;name=subtraction-test-8
+(- -3 -6)
+;;=>3
+
+
+;;name=subtraction-test-9
+(- -4 -4)
+;;=>0
+
+
+;;name=subtraction-test-10
+(- -2 -5)
+;;=>3
+
+
+;;name=subtraction-test-11
+(- 19 (- 80 62))
+;;=>1
+
+
+;;name=subtraction-test-12
+(- 97 (- 59 -62))
+;;=>-24
+
+
+;;name=subtraction-test-13
+(- 92 (- -76 -67))
+;;=>101
+
+
+;;name=subtraction-test-14
+(- 38 (- 94 -86))
+;;=>-142
+
+
+;;name=subtraction-test-15
+(- (- 78 -100) 36)
+;;=>142
+
+
+
+; Negation operator tests:
+;;name=negation-test-1
+(- 0)
+;;=>0
+
+
+;;name=negation-test-2
+(- 1)
+;;=>-1
+
+
+;;name=negation-test-3
+(- -2)
+;;=>2
+
+
+;;name=negation-test-4
+(- (- (- 0)))
+;;=>0
+
+;;name=negation-test-5
+(- (- (- (- (- (- (- (- 2))))))))
+;;=>2
+
+
+
+; Multiplication operator tests
+;;name=multiplication-test-1
+(* 1 1)
+;;=>1
+
+;;name=multiplication-test-2
+(* 1 0)
+;;=>0
+
+
+;;name=multiplication-test-3
+(* 0 0)
+;;=>0
+
+
+;;name=multiplication-test-4
+(* 2 2)
+;;=>4
+
+
+;;name=multiplication-test-5
+(* 6 7)
+;;=>42
+
+
+;;name=multiplication-test-6
+(* -8 -6)
+;;=>48
+
+
+;;name=multiplication-test-7
+(* -10 -6)
+;;=>60
+
+
+;;name=multiplication-test-8
+(* -7 -11)
+;;=>77
+
+
+;;name=multiplication-test-9
+(* -8 -13)
+;;=>104
+
+
+;;name=multiplication-test-10
+(* -6 -3)
+;;=>18
+
+
+;;name=multiplication-test-11
+(* (* 14 9) (* -22 -25))
+;;=>69300
+
+
+;;name=multiplication-test-12
+(* (* -23 19) (* 21 -25))
+;;=>229425
+
+
+;;name=multiplication-test-13
+(* -10 (* -29 -20))
+;;=>-5800
+
+
+;;name=multiplication-test-14
+(* 28 (* -19 -21))
+;;=>11172
+
+
+;;name=multiplication-test-15
+(* (* -8 11) (* 27 -27))
+;;=>64152
+
+
+;; Division tests to be added... Once we have floats working :)
+
+
+;; More complex tests:
+
+;;name=complex-arithmetic-test-1
+(* 29 (- (+ 19 -21) (+ -27 -18)))
+;;=>1247
+
+
+;;name=complex-arithmetic-test-2
+(* (- (* -18 -24) -5) (- (+ -7 1) (* 13 12)))
+;;=>-70794
+
+
+;;name=complex-arithmetic-test-3
+(- (- (- -8 -5) (* 4 -29)) 27)
+;;=>86
+
+
+;;name=complex-arithmetic-test-4
+(* -28 (* (- -4 8) (+ -26 2)))
+;;=>-8064
+
+
+;;name=complex-arithmetic-test-5
+(+ 10 (* (* 2 -15) (- -4 8)))
+;;=>370
+
+
+;;name=complex-arithmetic-test-6
+(* (+ 24 (+ 7 12)) (* 5 (+ 26 15)))
+;;=>8815
+
+
+;;name=complex-arithmetic-test-7
+(+ 15 (* -16 (+ -20 -19)))
+;;=>639
+
+
+;;name=complex-arithmetic-test-8
+(- -2 (* -5 (* -8 -29)))
+;;=>1158
+
+
+;;name=complex-arithmetic-test-9
+(+ 0 (- -2 (* 3 -26)))
+;;=>76
+
+
+;;name=complex-arithmetic-test-10
+(+ -3 (+ (* -16 -12) (* 18 7)))
+;;=>315
+
+
+;;name=complex-arithmetic-test-11
+(+ 18 (+ -24 (* 23 -1)))
+;;=>-29
+
+
+;;name=complex-arithmetic-test-12
+(* -26 (* (- 13 23) (- 19 24)))
+;;=>-1300
+
+
+;;name=complex-arithmetic-test-13
+(- (+ 7 (* -2 22)) -2)
+;;=>-35
+
+
+;;name=complex-arithmetic-test-14
+(- (* (* -9 -19) (* 24 2)) (- -24 (+ 12 28)))
+;;=>8272
+
+
+;;name=complex-arithmetic-test-15
+(* -3 (+ -26 (+ -15 17)))
+;;=>72

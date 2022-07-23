@@ -29,6 +29,12 @@ void show_ast(std::unique_ptr<AST>& ast, int indent_level) {
 inline void expect_token_string(std::string str,
                                 std::deque<std::shared_ptr<Token>> &tokens)
 {
+    if (tokens.size() == 0) {
+        printf("Unexpected EOF at end of file (you might have"
+               "forgotten to close a parenthesis)");
+        exit(-1);
+    }
+    
     auto& token = tokens.front();
     if (token->string_value != str)
         err_token(token, "syntax error: expected '" + str + "', but got '"
@@ -40,8 +46,14 @@ inline void expect_token_string(std::string str,
 
 // Expect the next token in the stream to have a particular type. If
 // not, fail with an error on the token.
-inline void expect_token_type(TokenType type, std::deque<std::shared_ptr<Token>> &tokens) {
-    assert(tokens.size() > 0);
+inline void expect_token_type(TokenType type,
+                              std::deque<std::shared_ptr<Token>> &tokens) {
+    if (tokens.size() == 0) {
+        printf("Unexpected EOF at end of file (you might have"
+               "forgotten to close a parenthesis)");
+        exit(-1);
+    }
+        
     auto& token = tokens.front();
 
     if (tokens.front()->type != type) {
@@ -70,7 +82,7 @@ void check_valid_symbol(std::string symbol) {
 */
 
 bool Parser::eof() {
-    return tokens.front()->type == TokenType::Eof;
+    return tokens.size() == 0;
 }
 
 
@@ -119,6 +131,5 @@ std::unique_ptr<AST> Parser::parse_sexpr() {
         }
     }
     expect_token_string(")", tokens);
-    //    show_ast(ast, 0);
     return ast;
 }

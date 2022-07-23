@@ -268,15 +268,5 @@ Lexer::tokenize_stream(std::string &stream)  {
         skip_whitespace();
     }
 
-    // Add an EOF token, which may actually not be necessary.
-    auto eof_token = std::make_shared<Token>();
-    eof_token->type = TokenType::Eof;
-    eof_token->string_value = "EOF";
-    eof_token->stream = &stream;
-    eof_token->col_num = col_num;
-    eof_token->line_num = line_num;
-
-    tokens.push_back(eof_token);
-
     return tokens;
 }

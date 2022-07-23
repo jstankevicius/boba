@@ -44,6 +44,7 @@ private:
     void emit_push_int(int i);
     void emit_push_ref(std::string& name);
     void emit_push(std::unique_ptr<AST>& ast);
+    void emit_do(std::unique_ptr<AST>& ast);
     void emit_if(std::unique_ptr<AST>& ast);
     void emit_def(std::unique_ptr<AST>& ast);
     void emit_fn(std::unique_ptr<AST>& ast);
@@ -75,15 +76,5 @@ public:
         std::memset(proc.instructions, 0, PROC_INSTRUCTION_SIZE);
     }
 
-    void eval_ast(std::unique_ptr<AST>& ast);
-
-    template<typename T>
-    inline T get_stack_top() {
-        if (proc.stack.size() > 0)
-            return proc.stack.back()->as<T>();
-        else {
-            printf("Runtime stack is empty!\n");
-            exit(-1);
-        }
-    }
+    std::shared_ptr<Value> eval_ast(std::unique_ptr<AST>& ast);
 };

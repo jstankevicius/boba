@@ -110,7 +110,7 @@ void create_closure(Processor& proc) {
         - offset;
 
     auto closure = std::make_shared<Closure>();
-    std::memset(closure->instructions, 0, 1024);
+    std::memset(closure->instructions, 0, 8192);
     std::memcpy(closure->instructions, code_begin, offset);
     
     closure->env = proc.envs.back();

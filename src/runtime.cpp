@@ -7,7 +7,6 @@
 
 #include "processor.h"
 
-#define BUILTIN_ENTRY
 
 // Relative emit - emits an int exactly at write_offset, then advances
 // write_offset.
@@ -41,7 +40,6 @@ inline void Runtime::emit_push_ref(std::string &name) {
 
     if (var_index < 0) {
         // TODO: fail here.
-        std::cout << "Error: undefined variable: " << name << std::endl;
         exit(-1);
     }
 
@@ -68,32 +66,20 @@ void Runtime::emit_push(std::unique_ptr<AST>& ast) {
 void Runtime::emit_expr(std::unique_ptr<AST>& ast) {
 
     if (ast->children.size() == 0) {
-        if (ast->type == ASTType::Expr)
-            return;
-        else {
+        if (ast->type != ASTType::Expr)
             emit_push(ast);
-            return;
-        }
+        
+        // If the AST is an expression but has 0 children, we won't
+        // emit any code for it at all.
+        return;
     }
+    
     auto& first = ast->children[0]->token->string_value;
-    if (first == "def") {
-        emit_def(ast);
-    }
-
-    else if (first == "if") {
-        emit_if(ast);
-    }
-
-    else if (first == "fn") {
-        emit_fn(ast);
-    }
-
-    // For now, everything that isn't a def will just be assumed to be
-    // an arithmetic expression. We'll need to start handling defuns
-    // soon.
-    else {
-        emit_call(ast);
-    }
+    if (first == "def") emit_def(ast);
+    else if (first == "do") emit_do(ast);
+    else if (first == "if") emit_if(ast);
+    else if (first == "fn") emit_fn(ast);
+    else emit_call(ast);
 }
 
 
@@ -179,7 +165,7 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast) {
         int var_index = -1;
         
         for (int i = scopes.size() - 1; i >= 0; i--) {
-            if (scopes[i].var_indices.find(fn_name) != scopes[i].var_indices.end()) {
+            if (scopes[i].var_indices.count(fn_name) > 0) {
                 var_index = scopes[i].var_indices.find(fn_name)->second;
                 break;
             }
@@ -195,6 +181,12 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast) {
         proc.write_offset += sizeof(Instruction);
         mem_put<int>(var_index, proc.write_head());
         proc.write_offset += sizeof(int);
+    }
+}
+
+void Runtime::emit_do(std::unique_ptr<AST>& ast) {
+    for (int i = 1; i < ast->children.size(); i++) {
+        emit_expr(ast->children[i]);
     }
 }
 
@@ -378,7 +370,7 @@ void Runtime::emit_fn(std::unique_ptr<AST>& ast) {
     scopes.pop_back();
 }
 
-void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
+std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     long long old_woff = proc.write_offset;
     emit_expr(ast);
     
@@ -387,11 +379,11 @@ void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     // flag and potentially zero out all the bytecode we just
     // generated if we know it is invalid.
 
-    proc.print_instructions(old_woff);
-    printf("==============================================\n");
-    printf("Running bytecode...\n");
+    // proc.print_instructions(old_woff);
     
     // Run until we hit a 0 byte
+    //long inst_count = 0;
+    
     try {
         while (*proc.ip) {
             unsigned char inst = *proc.ip;
@@ -410,19 +402,18 @@ void Runtime::eval_ast(std::unique_ptr<AST>& ast) {
             printf("\n");
         }
     }
-    
-    //printf("Instruction size: %lld bytes\n", proc.write_offset - old_woff);
 
+    //printf("Executed %ld instructions\n", inst_count);
     // proc.print_instructions();
-    if (proc.stack.size() > 0)
-        printf("Stack top: %d\n", proc.stack.back()->as<int>());
-    else
-        printf("Stack top: nil\n");
-
-    printf("Call stack:\n");
-    for (int i = 0; i < proc.call_stack.size(); i++) {
-        printf("%p\n", proc.call_stack[i]);
+    if (proc.stack.size() > 0) {
+        auto result = proc.stack.back();
+        proc.stack.clear();
+        return result;
     }
+    else {
+        proc.stack.clear();
 
-    //proc.stack.clear();
+        // Default constructor initializes type to nil
+        return std::make_shared<Value>();
+    }
 }

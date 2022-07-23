@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
     parser.tokenize_string(content);
     while (!parser.eof()) {
         auto ast = parser.parse_sexpr();
-        runtime.eval_ast(ast);
+        auto result = runtime.eval_ast(ast);
+        std::cout << result->to_string() << '\n';
     }
 }
