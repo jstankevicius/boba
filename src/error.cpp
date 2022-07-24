@@ -1,6 +1,5 @@
 #include "error.h"
 
-#include <cstdint>
 #include <iostream>
 #include <string.h>
 
@@ -10,7 +9,7 @@ void err_token(std::shared_ptr<Token> token, std::string message) {
     std::cout << "ERROR: line " << token->line_num << ", column "
               << token->col_num << std::endl;
 
-    uint32_t i = 0;
+    size_t i = 0;
     for (int line = 1; line < token->line_num; line++) {
         while (stream[i] != '\n' && stream[i] != '\r') i++;
 
@@ -36,7 +35,7 @@ void err_token(std::shared_ptr<Token> token, std::string message) {
 
     // Print the message under the line:
     for (int i = 1; i < token->col_num; i++) std::cout << " ";
-    for (uint32_t i = 0; i < token->string_value.length(); i++)
+    for (size_t i = 0; i < token->string_value.length(); i++)
         std::cout << "^";
     
     std::cout << " " << message << std::endl;

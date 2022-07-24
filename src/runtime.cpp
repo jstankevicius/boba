@@ -3,8 +3,6 @@
 #include <stddef.h>
 
 #include <cstring>
-#include <cstdarg>
-#include <cstdint>
 #include <iostream>
 #include <math.h>
 
@@ -386,7 +384,7 @@ std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     // Run until we hit a 0 byte
     
     while (*proc.ip) {
-        uint8_t inst = *proc.ip;
+        unsigned char inst = *proc.ip;
         proc.jump_table[inst](proc);
     }
     

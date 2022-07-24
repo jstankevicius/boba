@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstring>
-#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -9,7 +8,7 @@
 
 #define PROC_INSTRUCTION_SIZE 1 << 16
 
-enum class Instruction : uint8_t {
+enum class Instruction : unsigned char {
 
     // Pushing stuff onto the stack:
     PushInt = 1,
@@ -58,13 +57,13 @@ enum class Instruction : uint8_t {
 struct Processor {
 
     // Instruction bytes.
-    uint8_t instructions[PROC_INSTRUCTION_SIZE];
+    unsigned char instructions[PROC_INSTRUCTION_SIZE];
 
     // Instruction pointer.
-    uint8_t* ip = instructions;
+    unsigned char* ip = instructions;
 
     // Offset into the instruction buffer.
-    long write_offset = 0;
+    unsigned int write_offset = 0;
 
     // Program stack.
     // TODO: Rename to value_stack or something.
@@ -86,14 +85,14 @@ struct Processor {
 
     Processor();
 
-    inline uint8_t* write_head() {
+    inline unsigned char* write_head() {
         return instructions + write_offset;
     }
 
     void print_instructions(int start) {
         printf("===========================================\n");
         
-        for (int i = start; i < write_offset;) {
+        for (unsigned int i = start; i < write_offset;) {
             int int_val;
 
             // Eagerly copy instructions[i+1] to int_val. The value
