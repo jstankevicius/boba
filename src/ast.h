@@ -24,14 +24,11 @@ struct AST {
     std::vector<std::unique_ptr<AST>> children;
     std::shared_ptr<Token> token;
 
-    AST(ASTType type) {
-        this->type = type;
-    }
+    AST(ASTType type) : type(type) {}
 
-    AST(ASTType type, std::shared_ptr<Token> token) {
-        this->type = type;
-        this->token = token;
-    }
+    AST(ASTType type, std::shared_ptr<Token> token)
+        : type(type), token(token) {}
+        
 
     inline void
     add_leaf_child(ASTType type, std::shared_ptr<Token> token) {

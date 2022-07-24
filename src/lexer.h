@@ -6,38 +6,27 @@
 #include <deque>
 #include <memory>
 #include <cassert>
-#include <cstdint>
+
 #include "token.h"
-
-// Macros:
-#define is_alpha(c) (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z'))
-#define is_underscore(c) (c == '_')
-#define is_numeric(c) ('0' <= c && c <= '9')
-#define is_whitespace(c) (c == ' ' || c == '\t' || c == '\n' || c == '\r')
-#define is_alphanumeric(c) (is_alpha(c) || is_numeric(c) || is_underscore(c))
-
-#define is_arithmetic_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' || c == '^')
-#define is_comparator(c) (c == '=' || c == '<' || c == '>')
-#define is_operator(c) (is_comparator(c) || is_arithmetic_operator(c))
 
 class Lexer {
 
     private:
-        uint32_t stream_idx = 0;
-        uint32_t line_num = 1;
-        uint32_t col_num = 1;
+        unsigned int stream_idx = 0;
+        unsigned int line_num = 1;
+        unsigned int col_num = 1;
 
         std::string stream;
 
         char cur_char();
         void advance_char();
-        char lookahead_char(uint32_t lookahead);
-        char lookahead_char_at(uint32_t idx, uint32_t lookahead);
+        char lookahead_char(unsigned int lookahead);
+        char lookahead_char_at(unsigned int idx,
+                               unsigned int lookahead);
         void skip_whitespace();
         bool done();
 
-        std::shared_ptr<Token> get_identifier_or_keyword();
-        std::shared_ptr<Token> get_operator();
+        std::shared_ptr<Token> get_symbol();
         std::shared_ptr<Token> get_numeric_literal();
         std::shared_ptr<Token> get_string_literal();
         std::shared_ptr<Token> get_punctuation();

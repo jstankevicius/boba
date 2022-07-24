@@ -26,12 +26,12 @@ void show_ast(std::unique_ptr<AST>& ast, int indent_level) {
 
 // Expect the next token in the stream to have a particular string as
 // its contents. If not, fail with an error on the token.
-inline void expect_token_string(std::string str,
-                                std::deque<std::shared_ptr<Token>> &tokens)
-{
+void expect_token_string(std::string str,
+                         std::deque<std::shared_ptr<Token>> &tokens) {
+
     if (tokens.size() == 0) {
         printf("Unexpected EOF at end of file (you might have"
-               "forgotten to close a parenthesis)");
+               " forgotten to close a parenthesis)");
         exit(-1);
     }
     
@@ -46,42 +46,41 @@ inline void expect_token_string(std::string str,
 
 // Expect the next token in the stream to have a particular type. If
 // not, fail with an error on the token.
-inline void expect_token_type(TokenType type,
-                              std::deque<std::shared_ptr<Token>> &tokens) {
+void expect_token_type(TokenType type,
+                       std::deque<std::shared_ptr<Token>> &tokens) {
+
     if (tokens.size() == 0) {
-        printf("Unexpected EOF at end of file (you might have"
-               "forgotten to close a parenthesis)");
+        printf("Unexpected EOF at end of file\n");
         exit(-1);
     }
-        
+
     auto& token = tokens.front();
 
     if (tokens.front()->type != type) {
         switch (type) {
-            case TokenType::Symbol:
-                err_token(token, "expected a symbol");
-                break;
-
-		// TODO: handle all token types. For now we only care
-		// about symbols.
-            default:
-                err_token(token, "internal parser error: unhandled token type!");
-                break;
+        case TokenType::Symbol:
+            err_token(token, "expected a symbol");
+            break;
+        case TokenType::Punctuation:
+            err_token(token, "expected '(', ')', '[', ']', '{', or '{'");
+            break;
+        case TokenType::IntLiteral:
+            err_token(token, "expected an integer literal");
+            break;
+        case TokenType::FloatLiteral:
+            err_token(token, "expected a float literal");
+            break;
+        case TokenType::StrLiteral:
+            err_token(token, "expected a string literal");
+            break;
+        case TokenType::BoolLiteral:
+            err_token(token, "expected a boolean literal");
+            break;
         }
     }
     tokens.pop_front();
 }
 
-
-/*
-void check_valid_symbol(std::string symbol) {
-    if (is_alpha(symbol.front() || is_underscore(symbol.front()))) {
-        // Parse as variable:
-    } else if (is_operator(symbol.front())) {
-        // Parse as operator:
-    }
-}
-*/
 
 bool Parser::eof() {
     return tokens.size() == 0;
@@ -105,33 +104,40 @@ std::unique_ptr<AST> Parser::parse_sexpr() {
     auto ast = std::make_unique<AST>(ASTType::Expr, tokens.front());
     expect_token_string("(", tokens);
 
-    //check_valid_symbol(ast->string_value);
+    while (tokens.size() > 0 && tokens.front()->string_value != ")") {
 
-    while (tokens.front()->type != TokenType::Eof && tokens.front()->string_value != ")") {
-        auto& front = tokens.front();
+        auto front = tokens.front();
 
-        if (front->type == TokenType::Symbol) {
+        switch (front->type) {
+        case (TokenType::Symbol):
             ast->add_leaf_child(ASTType::Symbol, front);
             expect_token_type(TokenType::Symbol, tokens);
-        } else if (front->type == TokenType::StrLiteral) {
+            break;
+        case (TokenType::StrLiteral):
             ast->add_leaf_child(ASTType::StrLiteral, front);
             expect_token_type(TokenType::StrLiteral, tokens);
-        } else if (front->type == TokenType::IntLiteral) {
+            break;
+        case (TokenType::IntLiteral):
             ast->add_leaf_child(ASTType::IntLiteral, front);
             expect_token_type(TokenType::IntLiteral, tokens);
-        } else if (front->type == TokenType::FloatLiteral) {
+            break;
+        case (TokenType::FloatLiteral):
             ast->add_leaf_child(ASTType::FloatLiteral, front);
             expect_token_type(TokenType::FloatLiteral, tokens);
-        } else if (front->type == TokenType::BoolLiteral) {
+            break;
+        case (TokenType::BoolLiteral):
             ast->add_leaf_child(ASTType::BoolLiteral, front);
             expect_token_type(TokenType::BoolLiteral, tokens);
-        }
-        else if (front->string_value == "(") {
-            ast->children.push_back(parse_sexpr());
-        } else {
-            err_token(front, "internal parser error: unhandled token type");
+            break;
+        default:
+            if (front->string_value == "(")
+                ast->children.push_back(parse_sexpr());                
+            else
+                err_token(front, "internal parser error: unhandled"
+                          " token type");
         }
     }
+    
     expect_token_string(")", tokens);
     return ast;
 }

@@ -1,10 +1,21 @@
+#include "lexer.h"
+
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "error.h"
-#include "lexer.h"
+
+// Macros:
+#define is_alpha(c) (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z'))
+#define is_numeric(c) ('0' <= c && c <= '9')
+#define is_whitespace(c) (c == ' ' || c == '\t' || c == '\n' \
+                          || c == '\r')
+#define is_alphanumeric(c) (is_alpha(c) || is_numeric(c) || c == '_')
+
+#define is_punctuation(c) (c == '(' || c == ')' || c == '[' \
+                           || c == ']' || c == '{' || c == '}')
 
 Lexer::Lexer() {}
 
@@ -17,6 +28,7 @@ bool Lexer::done() {
 void Lexer::advance_char() {
 
     char cur = cur_char();
+    
     if (!done()) {
         stream_idx++;
         col_num++;
@@ -40,7 +52,7 @@ char Lexer::cur_char() {
 }
 
 
-char Lexer::lookahead_char(uint32_t lookahead) {
+char Lexer::lookahead_char(unsigned int lookahead) {
     if (stream_idx + lookahead < stream.length())
         return stream[stream_idx + lookahead];
 
@@ -48,7 +60,8 @@ char Lexer::lookahead_char(uint32_t lookahead) {
 }
 
 
-char Lexer::lookahead_char_at(uint32_t idx, uint32_t lookahead) {
+char Lexer::lookahead_char_at(unsigned int idx,
+                              unsigned int lookahead) {
     if (idx + lookahead < stream.length())
         return stream[idx + lookahead];
 
@@ -63,18 +76,20 @@ void Lexer::skip_whitespace() {
 }
 
 
-// Returns a token that is either an identifier or a keyword.
-std::shared_ptr<Token> Lexer::get_identifier_or_keyword()  {
+// Returns a token that is not a literal.
+std::shared_ptr<Token> Lexer::get_symbol()  {
 
     auto token = std::make_shared<Token>();
     token->col_num = col_num;
     token->line_num = line_num;
     token->stream = &stream;
+    
     std::string str;
 
     // Don't need to check for out of bounds since cur_char just
     // returns -1 once we've reached the end of the stream.
-    while (is_alphanumeric(cur_char())) {
+    while (!is_whitespace(cur_char()) && !done()
+           && !is_punctuation(cur_char())) {
         str += cur_char();
         advance_char();
     }
@@ -84,27 +99,6 @@ std::shared_ptr<Token> Lexer::get_identifier_or_keyword()  {
     // TODO: formatting?
     token->type = (str == "true" || str == "false") ?
                   TokenType::BoolLiteral : TokenType::Symbol;
-
-    return token;
-}
-
-
-// Returns an operator token.
-std::shared_ptr<Token> Lexer::get_operator() {
-
-    auto token = std::make_shared<Token>();
-    token->col_num = col_num;
-    token->line_num = line_num;
-    token->stream = &stream;
-    std::string op;
-
-    while (is_operator(cur_char())) {
-        op += cur_char();
-        advance_char();
-    }
-
-    token->string_value = op;
-    token->type = TokenType::Symbol;
 
     return token;
 }
@@ -226,17 +220,10 @@ Lexer::tokenize_stream(std::string &stream)  {
 
     while (!done()) {
 
-        // Identifiers can start with letters or underscores:
-        if (is_alpha(cur_char()) || is_underscore(cur_char()))
-            tokens.push_back(get_identifier_or_keyword());
-
         // Case for negative numbers:
-        else if ((cur_char() == '-')
+        if ((cur_char() == '-')
             && (lookahead_char(1) == '.' || is_numeric(lookahead_char(1))))
                 tokens.push_back(get_numeric_literal());
-
-        else if (is_operator(cur_char()))
-            tokens.push_back(get_operator());
 
         else if (is_numeric(cur_char())
             || (cur_char() == '.' && is_numeric(lookahead_char(1))))
@@ -261,8 +248,11 @@ Lexer::tokenize_stream(std::string &stream)  {
         }
 
         // Everything else is assumed to be punctuation
-        else
+        else if (is_punctuation(cur_char()))
             tokens.push_back(get_punctuation());
+
+        else
+            tokens.push_back(get_symbol());            
 
         // Skip whitespace characters
         skip_whitespace();

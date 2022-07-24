@@ -16,6 +16,7 @@
 // instruction it corresponds to, how many arguments it requires, and
 // whether it needs an integer argument supplied in memory.
 struct BuiltinEntry {
+    
     Instruction inst;
 
     // If nargs is -1, the runtime will know to supply the number of
@@ -42,7 +43,7 @@ private:
     int var_counter = 0;
 
     void emit_push_int(int i);
-    void emit_push_ref(std::string& name);
+    void emit_push_ref(std::unique_ptr<AST>& ast);
     void emit_push(std::unique_ptr<AST>& ast);
     void emit_do(std::unique_ptr<AST>& ast);
     void emit_if(std::unique_ptr<AST>& ast);

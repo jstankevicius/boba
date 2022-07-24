@@ -1,5 +1,7 @@
 #include "runtime.h"
 
+#include <stddef.h>
+
 #include <cstring>
 #include <cstdarg>
 #include <cstdint>
@@ -7,7 +9,7 @@
 #include <math.h>
 
 #include "processor.h"
-
+#include "error.h"
 
 // Relative emit - emits an int exactly at write_offset, then advances
 // write_offset.
@@ -18,7 +20,7 @@ inline void Runtime::emit_push_int(int i) {
     // arguments are different sizes to save space. Right now we have
     // a lot of empty bytes in the instruction buffer.
     mem_put<Instruction>(Instruction::PushInt, proc.write_head());
-    proc.write_offset += sizeof(unsigned char);
+    proc.write_offset += sizeof(Instruction);
 
     mem_put<int>(i, proc.write_head());
     proc.write_offset += sizeof(int);
@@ -26,10 +28,12 @@ inline void Runtime::emit_push_int(int i) {
 
 
 // Emit a push_ref instruction for a symbol with name `name`.
-inline void Runtime::emit_push_ref(std::string &name) {
+inline void Runtime::emit_push_ref(std::unique_ptr<AST>& ast) {
     // Figure out this ref's index. Start at the current environment
     // and go back up the stack, looking for the name. If not found,
     // error out.
+    auto& name = ast->token->string_value;
+    
     int var_index = -1;
     for (int i = scopes.size() - 1; i >= 0; i--) {
         auto& var_indices = scopes[i].var_indices;
@@ -39,10 +43,8 @@ inline void Runtime::emit_push_ref(std::string &name) {
         }
     }
 
-    if (var_index < 0) {
-        // TODO: fail here.
-        exit(-1);
-    }
+    if (var_index < 0)
+        err_token(ast->token, "Undefined symbol '" + name + "'");
 
     mem_put<Instruction>(Instruction::PushRef, proc.write_head());
     proc.write_offset += sizeof(Instruction);
@@ -57,7 +59,7 @@ void Runtime::emit_push(std::unique_ptr<AST>& ast) {
         emit_push_int(std::stoi(ast->token->string_value));
         break;
     case ASTType::Symbol:
-        emit_push_ref(ast->token->string_value);
+        emit_push_ref(ast);
         break;
     default:
         break;
@@ -87,7 +89,8 @@ void Runtime::emit_expr(std::unique_ptr<AST>& ast) {
 // Emit a function call.
 void Runtime::emit_call(std::unique_ptr<AST>& ast) {
 
-    std::string& fn_name = ast->children[0]->token->string_value;
+    auto& first = ast->children[0];
+    std::string& fn_name = first->token->string_value;
 
     const int n_args = ast->children.size() - 1;
     bool is_builtin = builtins.count(fn_name) > 0;
@@ -163,18 +166,19 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast) {
     else {
         // Get the function's index and instruction pointer:
         int var_index = -1;
-        
+
         for (int i = scopes.size() - 1; i >= 0; i--) {
-            if (scopes[i].var_indices.count(fn_name) > 0) {
-                var_index = scopes[i].var_indices.find(fn_name)->second;
+            auto& var_indices = scopes[i].var_indices;
+            if (var_indices.count(fn_name) > 0) {
+                var_index = var_indices[fn_name];
                 break;
             }
         }
+
+        if (var_index < 0)
+            err_token(first->token, "Undefined function '"
+                      + fn_name + "'");
         
-        if (var_index == -1) {
-            printf("Undefined function '%s'\n", fn_name.c_str());
-            exit(-1);
-        }
 
         // TODO: Check if correct number of arguments is supplied        
         mem_put<Instruction>(Instruction::Call, proc.write_head());
@@ -185,7 +189,7 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast) {
 }
 
 void Runtime::emit_do(std::unique_ptr<AST>& ast) {
-    for (uint32_t i = 1; i < ast->children.size(); i++) {
+    for (size_t i = 1; i < ast->children.size(); i++) {
         emit_expr(ast->children[i]);
     }
 }
@@ -309,7 +313,7 @@ void Runtime::emit_fn(std::unique_ptr<AST>& ast) {
     // arguments are pushed onto the stack before the jump. Here we
     // emit store instructions for those arguments and store their
     // values into the new environment.
-    for (uint32_t i = param_list->children.size() - 1; i >= 0; i--) {
+    for (int i = param_list->children.size() - 1; i >= 0; i--) {
         auto& child = param_list->children[i];
         
         // TODO: better error handling here
@@ -332,7 +336,7 @@ void Runtime::emit_fn(std::unique_ptr<AST>& ast) {
     
     // Now go through the rest of the expressions in the function and
     // emit bytecode for them.
-    for (uint32_t i = 2; i < ast->children.size(); i++)
+    for (size_t i = 2; i < ast->children.size(); i++)
         emit_expr(ast->children[i]);
     
     // Lastly, emit the ret instruction:
@@ -380,26 +384,12 @@ std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     // proc.print_instructions(old_woff);
     
     // Run until we hit a 0 byte
-    //long inst_count = 0;
     
-    try {
-        while (*proc.ip) {
-            uint8_t inst = *proc.ip;
-            proc.jump_table[inst](proc);
-        }
+    while (*proc.ip) {
+        uint8_t inst = *proc.ip;
+        proc.jump_table[inst](proc);
     }
-
-    catch (...) {
-        printf("RUNTIME ERROR\n");
-        printf("Stack state:\n");
-        for (int i = proc.stack.size() - 1; i >= 0; i--) {
-            printf("%d ", proc.stack.back()->as<int>());
-            if (i == proc.stack.size() - 1)
-                printf("<-------- top of stack");
-
-            printf("\n");
-        }
-    }
+    
 
     // Expressions that cannot possibly be referenced later in the
     // program (i.e. literally anything that is not a def or defn
@@ -418,8 +408,6 @@ std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast) {
         }
     }
 
-    //printf("Executed %ld instructions\n", inst_count);
-    // proc.print_instructions();
     if (proc.stack.size() > 0) {
         auto result = proc.stack.back();
         proc.stack.clear();

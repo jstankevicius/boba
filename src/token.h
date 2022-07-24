@@ -4,13 +4,6 @@
 #include <memory>
 
 enum class TokenType {
-
-    // Used if the lexer ever somehow fails to categorize a token.
-    Error,
-
-    // End of file
-    Eof,
-
     Punctuation,
     
     // Anything that isn't a literal - can be a function name,
