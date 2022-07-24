@@ -60,11 +60,13 @@ inline void expect_token_type(TokenType type,
         switch (type) {
             case TokenType::Symbol:
                 err_token(token, "expected a symbol");
+                break;
 
 		// TODO: handle all token types. For now we only care
 		// about symbols.
             default:
                 err_token(token, "internal parser error: unhandled token type!");
+                break;
         }
     }
     tokens.pop_front();
