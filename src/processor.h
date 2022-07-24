@@ -1,15 +1,15 @@
 #pragma once
 
 #include <cstring>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
 #include "environment.h"
 
-#define PROC_INSTRUCTION_SIZE 65535
-using byte = unsigned char;
+#define PROC_INSTRUCTION_SIZE 1 << 16
 
-enum class Instruction : byte {
+enum class Instruction : uint8_t {
 
     // Pushing stuff onto the stack:
     PushInt = 1,
@@ -58,10 +58,10 @@ enum class Instruction : byte {
 struct Processor {
 
     // Instruction bytes.
-    byte instructions[PROC_INSTRUCTION_SIZE];
+    uint8_t instructions[PROC_INSTRUCTION_SIZE];
 
     // Instruction pointer.
-    byte* ip = instructions;
+    uint8_t* ip = instructions;
 
     // Offset into the instruction buffer.
     long write_offset = 0;
@@ -86,7 +86,7 @@ struct Processor {
 
     Processor();
 
-    inline byte* write_head() {
+    inline uint8_t* write_head() {
         return instructions + write_offset;
     }
 

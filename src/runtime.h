@@ -46,6 +46,7 @@ private:
     void emit_push(std::unique_ptr<AST>& ast);
     void emit_do(std::unique_ptr<AST>& ast);
     void emit_if(std::unique_ptr<AST>& ast);
+    void emit_cond(std::unique_ptr<AST>& ast);
     void emit_def(std::unique_ptr<AST>& ast);
     void emit_fn(std::unique_ptr<AST>& ast);
     void emit_call(std::unique_ptr<AST>& ast);

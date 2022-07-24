@@ -106,7 +106,7 @@ void create_closure(Processor& proc) {
     int offset = mem_get<int>(proc.ip);
     proc.ip += sizeof(int);
     
-    byte* code_begin = proc.ip - sizeof(Instruction) - sizeof(int)
+    uint8_t* code_begin = proc.ip - sizeof(Instruction) - sizeof(int)
         - offset;
 
     auto closure = std::make_shared<Closure>();
@@ -128,7 +128,7 @@ void ret(Processor &proc) {
         exit(-1);
     }
     
-    byte* ret_ip = proc.call_stack.back();
+    uint8_t* ret_ip = proc.call_stack.back();
     proc.call_stack.pop_back();
     
     proc.ip = ret_ip;

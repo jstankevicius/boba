@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <cstdarg>
+#include <cstdint>
 #include <iostream>
 #include <math.h>
 
@@ -90,10 +91,9 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast) {
 
     const int n_args = ast->children.size() - 1;
     bool is_builtin = builtins.count(fn_name) > 0;
-    long old_woff = proc.write_offset;
 
     // First, add all the operands to the stack:
-    for (int i = 1; i < ast->children.size(); i++) {
+    for (unsigned long i = 1; i < ast->children.size(); i++) {
         auto &child = ast->children[i];
         if (child->type == ASTType::Expr)
             emit_expr(child);
@@ -185,7 +185,7 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast) {
 }
 
 void Runtime::emit_do(std::unique_ptr<AST>& ast) {
-    for (int i = 1; i < ast->children.size(); i++) {
+    for (uint32_t i = 1; i < ast->children.size(); i++) {
         emit_expr(ast->children[i]);
     }
 }
@@ -250,8 +250,6 @@ void Runtime::emit_if(std::unique_ptr<AST>& ast) {
     mem_put<Instruction>(Instruction::Jmp,
                          proc.instructions + old_woff);
 
-    // TODO: I feel like this is broken. Why is this not an off by 1
-    // error?
     mem_put<int>(proc.write_offset - old_woff,
                  proc.instructions + old_woff + sizeof(Instruction));
 }
@@ -311,7 +309,7 @@ void Runtime::emit_fn(std::unique_ptr<AST>& ast) {
     // arguments are pushed onto the stack before the jump. Here we
     // emit store instructions for those arguments and store their
     // values into the new environment.
-    for (int i = param_list->children.size() - 1; i >= 0; i--) {
+    for (uint32_t i = param_list->children.size() - 1; i >= 0; i--) {
         auto& child = param_list->children[i];
         
         // TODO: better error handling here
@@ -334,7 +332,7 @@ void Runtime::emit_fn(std::unique_ptr<AST>& ast) {
     
     // Now go through the rest of the expressions in the function and
     // emit bytecode for them.
-    for (int i = 2; i < ast->children.size(); i++)
+    for (uint32_t i = 2; i < ast->children.size(); i++)
         emit_expr(ast->children[i]);
     
     // Lastly, emit the ret instruction:
@@ -386,7 +384,7 @@ std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     
     try {
         while (*proc.ip) {
-            unsigned char inst = *proc.ip;
+            uint8_t inst = *proc.ip;
             proc.jump_table[inst](proc);
         }
     }

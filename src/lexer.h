@@ -6,6 +6,7 @@
 #include <deque>
 #include <memory>
 #include <cassert>
+#include <cstdint>
 #include "token.h"
 
 // Macros:
@@ -22,16 +23,16 @@
 class Lexer {
 
     private:
-        int stream_idx = 0;
-        int line_num = 1;
-        int col_num = 1;
+        uint32_t stream_idx = 0;
+        uint32_t line_num = 1;
+        uint32_t col_num = 1;
 
         std::string stream;
 
         char cur_char();
         void advance_char();
-        char lookahead_char(int lookahead);
-        char lookahead_char_at(int idx, int lookahead);
+        char lookahead_char(uint32_t lookahead);
+        char lookahead_char_at(uint32_t idx, uint32_t lookahead);
         void skip_whitespace();
         bool done();
 

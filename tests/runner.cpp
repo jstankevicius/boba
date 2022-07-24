@@ -60,7 +60,7 @@ int main() {
     int successes = 0;
     int failures = 0;
     
-    for (int i = 0; i < expected_outputs.size(); i++) {
+    for (uint32_t i = 0; i < expected_outputs.size(); i++) {
         std::cout << "Running " << section_names[i] << "... ";
         auto result = t.eval_expr()->to_string();
         if (result == expected_outputs[i]) {

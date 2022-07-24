@@ -40,7 +40,7 @@ char Lexer::cur_char() {
 }
 
 
-char Lexer::lookahead_char(int lookahead) {
+char Lexer::lookahead_char(uint32_t lookahead) {
     if (stream_idx + lookahead < stream.length())
         return stream[stream_idx + lookahead];
 
@@ -48,7 +48,7 @@ char Lexer::lookahead_char(int lookahead) {
 }
 
 
-char Lexer::lookahead_char_at(int idx, int lookahead) {
+char Lexer::lookahead_char_at(uint32_t idx, uint32_t lookahead) {
     if (idx + lookahead < stream.length())
         return stream[idx + lookahead];
 
