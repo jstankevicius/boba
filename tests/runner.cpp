@@ -1,11 +1,13 @@
+#include <cassert>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <fstream>
 
 #include "lexer.h"
 #include "parser.h"
 #include "runtime.h"
-#include <memory>
+
 
 
 class TestRunner {
