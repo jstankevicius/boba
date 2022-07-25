@@ -26,12 +26,12 @@ int main(int argc, char *argv[])
     std::string content((std::istreambuf_iterator<char>(file)),
                         (std::istreambuf_iterator<char>()   ));
 
-    Parser parser;
     Runtime runtime;
-
-    parser.tokenize_string(content);
-    while (!parser.eof()) {
-        auto ast = parser.parse_sexpr();
+    TextHandle handle(content);
+    
+    auto tokens = tokenize(handle);
+    while (tokens.size() > 0) {
+        auto ast = parse_expr(tokens);
         auto result = runtime.eval_ast(ast);
         std::cout << result->to_string() << '\n';
     }

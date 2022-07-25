@@ -1,40 +1,30 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <unordered_map>
 #include <deque>
 #include <memory>
-#include <cassert>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "token.h"
 
-class Lexer {
+// A TextHandle bundles together a stream (a program represented as a
+// string) and a current position within that string.
+struct TextHandle {
+    unsigned int idx = 0;
+    unsigned int line_num = 1;
+    unsigned int col_num = 1;
 
-    private:
-        unsigned int stream_idx = 0;
-        unsigned int line_num = 1;
-        unsigned int col_num = 1;
+    std::string stream;
 
-        std::string stream;
+    TextHandle(std::string& stream) : stream(stream) {}
 
-        char cur_char();
-        void advance_char();
-        char lookahead_char(unsigned int lookahead);
-        char lookahead_char_at(unsigned int idx,
-                               unsigned int lookahead);
-        void skip_whitespace();
-        bool done();
-
-        std::shared_ptr<Token> get_symbol();
-        std::shared_ptr<Token> get_numeric_literal();
-        std::shared_ptr<Token> get_string_literal();
-        std::shared_ptr<Token> get_punctuation();
-        std::shared_ptr<Token> get_end_of_line();
-
-    public:
-        Lexer();
-        std::deque<std::shared_ptr<Token>> tokenize_stream(std::string &stream);
+    bool done();
+    char cur_char();
+    char peek();
+    void advance_char();
+    void skip_whitespace();
 };
 
+std::deque<std::shared_ptr<Token>> tokenize(TextHandle& t);
 

@@ -1,28 +1,14 @@
 #include "parser.h"
 
 #include <deque>
-#include <string>
 #include <iostream>
 #include <memory>
+#include <string>
 
-#include "token.h"
-#include "error.h"
 #include "ast.h"
+#include "error.h"
 #include "lexer.h"
-
-
-// "Show" (display) the AST in std::cout. Used for debugging.
-void show_ast(std::unique_ptr<AST>& ast, int indent_level) {
-    if (ast == NULL) return;
-
-    for (int i = 0; i < indent_level; i++) std::cout << "   ";
-    std::cout << "AST(" << ast->token->string_value << ") " << (int)ast->type << std::endl;
-
-    for (auto& child : ast->children) {
-        show_ast(child, indent_level + 1);
-    }
-}
-
+#include "token.h"
 
 // Expect the next token in the stream to have a particular string as
 // its contents. If not, fail with an error on the token.
@@ -30,19 +16,17 @@ void expect_token_string(std::string str,
                          std::deque<std::shared_ptr<Token>> &tokens) {
 
     if (tokens.size() == 0) {
-        printf("Unexpected EOF at end of file (you might have"
-               " forgotten to close a parenthesis)");
+        printf("Unexpected EOF at end of file\n");
         exit(-1);
     }
     
     auto& token = tokens.front();
     if (token->string_value != str)
-        err_token(token, "syntax error: expected '" + str + "', but got '"
-            + token->string_value + "' ");
+        err_token(token, "syntax error: expected '" + str
+                  + "', but got '" + token->string_value + "' ");
 
     tokens.pop_front();
 }
-
 
 // Expect the next token in the stream to have a particular type. If
 // not, fail with an error on the token.
@@ -54,7 +38,7 @@ void expect_token_type(TokenType type,
         exit(-1);
     }
 
-    auto& token = tokens.front();
+    auto token = tokens.front();
 
     if (tokens.front()->type != type) {
         switch (type) {
@@ -78,28 +62,14 @@ void expect_token_type(TokenType type,
             break;
         }
     }
+    
     tokens.pop_front();
 }
 
-
-bool Parser::eof() {
-    return tokens.size() == 0;
-}
-
-
-void Parser::tokenize_string(std::string &str) {
-    Lexer lexer;
-    auto lexed_tokens = lexer.tokenize_stream(str);
-
-    for (auto& token : lexed_tokens) {
-	tokens.push_back(token);
-    }
-}
-
-
 // Parse an s-expression from the token stream. An expression (for
 // now) is anything that is enclosed by parentheses.
-std::unique_ptr<AST> Parser::parse_sexpr() {
+std::unique_ptr<AST>
+parse_expr(std::deque<std::shared_ptr<Token>>& tokens) {
 
     auto ast = std::make_unique<AST>(ASTType::Expr, tokens.front());
     expect_token_string("(", tokens);
@@ -131,7 +101,7 @@ std::unique_ptr<AST> Parser::parse_sexpr() {
             break;
         default:
             if (front->string_value == "(")
-                ast->children.push_back(parse_sexpr());                
+                ast->children.push_back(parse_expr(tokens));                
             else
                 err_token(front, "internal parser error: unhandled"
                           " token type");

@@ -1,5 +1,4 @@
 #include "runtime.h"
-
 #include <stddef.h>
 
 #include <cstring>
@@ -186,12 +185,14 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast) {
     }
 }
 
+// Emit the bytecode for a do statement.
 void Runtime::emit_do(std::unique_ptr<AST>& ast) {
     for (size_t i = 1; i < ast->children.size(); i++) {
         emit_expr(ast->children[i]);
     }
 }
 
+// Emit the bytecode for an if statement.
 void Runtime::emit_if(std::unique_ptr<AST>& ast) {
     // Structure of an if statement in bytecode:
     //
@@ -256,6 +257,7 @@ void Runtime::emit_if(std::unique_ptr<AST>& ast) {
                  proc.instructions + old_woff + sizeof(Instruction));
 }
 
+// Emit the bytecode for a def.
 void Runtime::emit_def(std::unique_ptr<AST>& ast) {
     // Leftmost child is always the symbol name
     // TODO: error handling here, like for having too many child nodes
@@ -285,6 +287,7 @@ void Runtime::emit_def(std::unique_ptr<AST>& ast) {
     proc.write_offset += sizeof(int);
 }
 
+// Emit the bytecode to generate a lambda.
 void Runtime::emit_fn(std::unique_ptr<AST>& ast) {
     
     // Bytecode for emitting an fn:
@@ -378,16 +381,12 @@ std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     // bytecode generation. At this point, we should check the error
     // flag and potentially zero out all the bytecode we just
     // generated if we know it is invalid.
-
-    // proc.print_instructions(old_woff);
     
     // Run until we hit a 0 byte
-    
     while (*proc.ip) {
         unsigned char inst = *proc.ip;
         proc.jump_table[inst](proc);
     }
-    
 
     // Expressions that cannot possibly be referenced later in the
     // program (i.e. literally anything that is not a def or defn

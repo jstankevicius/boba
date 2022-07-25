@@ -11,22 +11,24 @@
 class TestRunner {
 
 private:
-    Parser parser;
     Runtime runtime;
+    std::deque<std::shared_ptr<Token>> tokens;
 
 public:
 
     void tokenize_string(std::string str) {
-        parser.tokenize_string(str);
+        TextHandle handle(str);
+        auto lexed_tokens = tokenize(handle);
+        for (auto token : lexed_tokens) {
+            tokens.push_back(token);
+        }
     }
-
     
     std::shared_ptr<Value> eval_expr() {
-        auto ast = parser.parse_sexpr();
+        auto ast = parse_expr(tokens);
         return runtime.eval_ast(ast);
     }
 };
-
 
 int main() {
     TestRunner t;
