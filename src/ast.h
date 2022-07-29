@@ -5,7 +5,8 @@
 #include <memory>
 #include "token.h"
 
-enum class ASTType {
+enum class ASTType
+{
     Root,
 
     Expr, // implicit grouping of parentheses
@@ -19,19 +20,25 @@ enum class ASTType {
     BoolLiteral,
 };
 
-struct AST {
+struct AST
+{
     ASTType type;
     std::vector<std::unique_ptr<AST>> children;
     std::shared_ptr<Token> token;
 
-    AST(ASTType type) : type(type) {}
+    AST(ASTType type) : type(type)
+    {
 
-    AST(ASTType type, std::shared_ptr<Token> token)
-        : type(type), token(token) {}
+    }
+
+    AST(ASTType type, std::shared_ptr<Token> token) : type(type), token(token)
+    {
+
+    }
         
 
-    inline void
-    add_leaf_child(ASTType type, std::shared_ptr<Token> token) {
+    inline void add_leaf_child(ASTType type, std::shared_ptr<Token> token)
+    {
         children.push_back(std::make_unique<AST>(type, token));
     }
 };

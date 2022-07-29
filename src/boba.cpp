@@ -10,7 +10,8 @@
 int main(int argc, char *argv[])
 {
 
-    if (argc < 2) {
+    if (argc < 2)
+    {
         std::cerr << "Error: no input file" << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -32,7 +33,8 @@ int main(int argc, char *argv[])
     
     auto tokens = tokenize(handle);
 
-    while (tokens.size() > 0) {
+    while (tokens.size() > 0)
+    {
         auto ast = parse_expr(tokens);
         auto result = runtime.eval_ast(ast);
         std::cout << result->to_string() << '\n';

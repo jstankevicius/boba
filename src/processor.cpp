@@ -7,7 +7,8 @@
 #define INST_ENTRY(id, fun) (jump_table[(unsigned long) id] = fun)
 
 // Pushes an integer onto the stack.
-void push_int(Processor &proc) {
+void push_int(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int i = mem_get<int>(proc.ip);
@@ -15,7 +16,8 @@ void push_int(Processor &proc) {
     proc.ip += sizeof(int);
 }
 
-void push_ref(Processor &proc) {
+void push_ref(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int var_index = mem_get<int>(proc.ip);
@@ -23,7 +25,8 @@ void push_ref(Processor &proc) {
     proc.ip += sizeof(int);
 }
 
-void store(Processor &proc) {
+void store(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     int var = mem_get<int>(proc.ip);
 
@@ -31,7 +34,8 @@ void store(Processor &proc) {
     
     // If we are storing a closure, then the closure also needs to
     // receive a copy of itself in its environment.
-    if (value->type == ValueType::Closure) {
+    if (value->type == ValueType::Closure)
+    {
         auto closure = value->as<std::shared_ptr<Closure>>();
         closure->env[var] = value;
     }
@@ -41,27 +45,32 @@ void store(Processor &proc) {
     proc.ip += sizeof(int);
 }
 
-void jmp(Processor &proc) {
+void jmp(Processor &proc)
+{
     int offset = mem_get<int>(proc.ip + sizeof(Instruction));
     proc.ip += offset;
 }
 
-void jmp_true(Processor &proc) {
+void jmp_true(Processor &proc)
+{
     bool is_true = proc.pop_as<bool>();
     int offset = mem_get<int>(proc.ip + sizeof(Instruction));
     
-    if (is_true) {
+    if (is_true)
+    {
         proc.ip += offset;
         return;
     }
     proc.ip += sizeof(Instruction) + sizeof(int);
 }
 
-void jmp_false(Processor &proc) {
+void jmp_false(Processor &proc)
+{
     bool is_true = proc.pop_as<bool>();
     int offset = mem_get<int>(proc.ip + sizeof(Instruction));
 
-    if (!is_true) {
+    if (!is_true)
+    {
         proc.ip += offset;
         return;
     }
@@ -69,8 +78,8 @@ void jmp_false(Processor &proc) {
     proc.ip += sizeof(Instruction) + sizeof(int);
 }
 
-void call(Processor &proc) {
-
+void call(Processor &proc)
+{
     // Push the ip after the call instruction onto the call stack:
     proc.call_stack.push_back(proc.ip
                               + sizeof(Instruction)
@@ -82,7 +91,8 @@ void call(Processor &proc) {
     // Get index of the function we're calling
     int var_index = mem_get<int>(proc.ip);
 
-    if (proc.envs.back().find(var_index) == proc.envs.back().end()) {
+    if (proc.envs.back().find(var_index) == proc.envs.back().end())
+    {
         printf("No entry for %d in current environment\n", var_index);
         exit(-1);
     }
@@ -95,19 +105,18 @@ void call(Processor &proc) {
 }
 
 
-void create_closure(Processor& proc) {
-
-    // offset denotes how many bytes from the beginning of this
-    // instruction the processor would have to jump backwards to get
-    // to the first code byte in the closure. Essentially, offset
-    // denotes the size of the bytecode in the closure.
+void create_closure(Processor& proc)
+{
+    // offset denotes how many bytes from the beginning of this instruction the
+    // processor would have to jump backwards to get to the first code byte in
+    // the closure. Essentially, offset denotes the size of the bytecode in the
+    // closure.
     proc.ip += sizeof(Instruction);
     
     int offset = mem_get<int>(proc.ip);
     proc.ip += sizeof(int);
     
-    unsigned char* code_begin = proc.ip - sizeof(Instruction)
-        - sizeof(int) - offset;
+    unsigned char* code_begin = proc.ip - sizeof(Instruction) - sizeof(int) - offset;
 
     auto closure = std::make_shared<Closure>();
     std::memcpy(closure->instructions, code_begin, offset);
@@ -122,8 +131,10 @@ void create_closure(Processor& proc) {
     proc.stack.push_back(std::make_shared<Value>(v));
 }
 
-void ret(Processor &proc) {
-    if (proc.call_stack.size() == 0) {
+void ret(Processor &proc)
+{
+    if (proc.call_stack.size() == 0)
+    {
         printf("ERROR: No return address on call stack\n");
         exit(-1);
     }
@@ -135,7 +146,8 @@ void ret(Processor &proc) {
     proc.envs.pop_back();
 }
 
-void add(Processor &proc) {
+void add(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
@@ -143,7 +155,8 @@ void add(Processor &proc) {
     proc.stack.push_back(std::make_shared<Value>(b + a));
 }
 
-void sub(Processor &proc) {
+void sub(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
@@ -151,7 +164,8 @@ void sub(Processor &proc) {
     proc.stack.push_back(std::make_shared<Value>(b - a));
 }
 
-void mul(Processor &proc) {
+void mul(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
@@ -159,7 +173,8 @@ void mul(Processor &proc) {
     proc.stack.push_back(std::make_shared<Value>(a * b));
 }
 
-void div(Processor &proc) {
+void div(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
@@ -167,14 +182,16 @@ void div(Processor &proc) {
     proc.stack.push_back(std::make_shared<Value>(b / a));
 }
 
-void neg(Processor &proc) {
+void neg(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
     proc.stack.push_back(std::make_shared<Value>(-a));
 }
 
-void eq(Processor &proc) {
+void eq(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
@@ -182,7 +199,8 @@ void eq(Processor &proc) {
     proc.stack.push_back(std::make_shared<Value>(a == b));
 }
 
-void greater(Processor &proc) {
+void greater(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
@@ -190,7 +208,8 @@ void greater(Processor &proc) {
     proc.stack.push_back(std::make_shared<Value>(b > a));
 }
 
-void greater_eq(Processor &proc) {
+void greater_eq(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
@@ -198,7 +217,8 @@ void greater_eq(Processor &proc) {
     proc.stack.push_back(std::make_shared<Value>(b >= a));
 }
 
-void less(Processor &proc) {
+void less(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
@@ -206,7 +226,8 @@ void less(Processor &proc) {
     proc.stack.push_back(std::make_shared<Value>(b < a));
 }
 
-void less_eq(Processor &proc) {
+void less_eq(Processor &proc)
+{
     proc.ip += sizeof(Instruction);
     
     int a = proc.pop_as<int>();
@@ -214,7 +235,8 @@ void less_eq(Processor &proc) {
     proc.stack.push_back(std::make_shared<Value>(b <= a));
 }
 
-Processor::Processor() {
+Processor::Processor()
+{
     envs.push_back(std::unordered_map<int, std::shared_ptr<Value>>());
     // Zero out instructions
     std::memset(instructions, 0, PROC_INSTRUCTION_SIZE);

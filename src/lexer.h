@@ -8,9 +8,10 @@
 
 #include "token.h"
 
-// A TextHandle bundles together a stream (a program represented as a
-// string) and a current position within that string.
-struct TextHandle {
+// A TextHandle bundles together a stream (a program represented as a string)
+// and a current position within that string.
+struct TextHandle
+{
     unsigned int idx = 0;
     unsigned int line_num = 1;
     unsigned int col_num = 1;
