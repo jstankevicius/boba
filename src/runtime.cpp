@@ -169,7 +169,19 @@ void Runtime::emit_expr(std::unique_ptr<AST>& ast)
 void Runtime::emit_call(std::unique_ptr<AST>& ast)
 {
     auto& first = ast->children[0];
-    std::string& fn_name = first->token->string_value;
+
+    // Call-by-name: (factorial 6)
+    // Indirect call: ((fn (n) (* 2 n)) 2)
+    
+    // The former is substantially cheaper, since bound closures have a variable
+    // index that we can use to immediately jump to the closure's code. The
+    // indirect case leaves a closure object on the stack, at which point we pop
+    // it and jump to its code. We could do the former this way as well, where
+    // we put a closure on the stack every time we call a function. However,
+    // this would be expensive, so we'll make a distinction between call-by-name
+    // and an indirect call.
+    
+    bool is_call_by_name = first->type == ASTType::Symbol;
 
     // First, add all the operands to the stack:
     for (unsigned long i = 1; i < ast->children.size(); i++)
@@ -185,7 +197,18 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast)
         }
     }
 
-    // Get the function's index and instruction pointer:
+    if (!is_call_by_name)
+    {
+        // We are assuming that executing the bytecode for the first node will
+        // leave us with a closure at the top of the stack.
+        emit_expr(first);
+        mem_put<Instruction>(Instruction::CallPop, proc.write_head);
+        proc.write_head += sizeof(Instruction);
+        return;
+    }
+
+    // Get the function's index
+    std::string& fn_name = first->token->string_value;
     int var_index = -1;
 
     for (int i = scopes.size() - 1; i >= 0; i--)

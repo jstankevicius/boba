@@ -104,6 +104,15 @@ void call(Processor &proc)
     proc.ip = closure->instructions;
 }
 
+void call_pop(Processor &proc)
+{
+    // Push the ip after the call instruction onto the call stack
+    proc.call_stack.push_back(proc.ip + sizeof(Instruction));
+    
+    auto closure = proc.pop_as<std::shared_ptr<Closure>>();
+    proc.envs.push_back(closure->env);
+    proc.ip = closure->instructions;
+}
 
 void create_closure(Processor& proc)
 {
@@ -254,6 +263,7 @@ Processor::Processor()
     INST_ENTRY(Instruction::JmpTrue, jmp_true);
     INST_ENTRY(Instruction::JmpFalse, jmp_false);
     INST_ENTRY(Instruction::Call, call);
+    INST_ENTRY(Instruction::CallPop, call_pop);
     INST_ENTRY(Instruction::CreateClosure, create_closure);
     INST_ENTRY(Instruction::Ret, ret);
     INST_ENTRY(Instruction::Eq, eq);

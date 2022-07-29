@@ -4,55 +4,10 @@
 #include <memory>
 #include <vector>
 
+#include "bytecode.h"
 #include "environment.h"
 
 #define PROC_INSTRUCTION_SIZE 1 << 16
-
-enum class Instruction : unsigned char
-{
-    // Pushing stuff onto the stack:
-    PushInt = 1,
-    PushStr = 2,
-    PushFloat = 3,
-    PushRef = 4,
-    
-    PushTrue = 5,
-    PushFalse = 6,
-    
-    PushNil = 7,
-
-    // Store:
-    Store = 8,
-
-    // Relative jumps:
-    Jmp = 9,
-    JmpTrue = 10,
-    JmpFalse = 11,
-    
-    Call = 12,
-    CreateClosure = 13,
-    
-    Ret = 14,
-
-    // Logic:
-    Not = 15,
-    And = 16,
-    Or = 17,
-
-    // Comparison:
-    Eq = 18,
-    Greater = 19,
-    GreaterEq = 20,
-    Less = 21,
-    LessEq = 22,
-
-    // Arithmetic:
-    Add = 23,
-    Sub = 24,
-    Mul = 25,
-    Div = 26,
-    Neg = 27,
-};
 
 struct Processor
 {
@@ -79,7 +34,6 @@ struct Processor
     // Table of functions to jump to on each instruction.
     void (*jump_table[256])(Processor &proc);
 
-    // Stack methods:
     template <typename T> inline T pop_as();
 
     Processor();
