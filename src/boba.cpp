@@ -9,12 +9,13 @@
 
 int main(int argc, char *argv[])
 {
+
     if (argc < 2) {
         std::cerr << "Error: no input file" << std::endl;
         exit(EXIT_FAILURE);
     }
+    
     std::ifstream file;
-
     file.open(argv[1]);
 
     if (!file.is_open())
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
     TextHandle handle(content);
     
     auto tokens = tokenize(handle);
+
     while (tokens.size() > 0) {
         auto ast = parse_expr(tokens);
         auto result = runtime.eval_ast(ast);

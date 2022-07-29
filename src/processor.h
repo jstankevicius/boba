@@ -62,8 +62,8 @@ struct Processor {
     // Instruction pointer.
     unsigned char* ip = instructions;
 
-    // Offset into the instruction buffer.
-    unsigned int write_offset = 0;
+    // Pointer to where the next instruction will be emitted.
+    unsigned char* write_head = instructions;
 
     // Program stack.
     // TODO: Rename to value_stack or something.
@@ -80,19 +80,14 @@ struct Processor {
     void (*jump_table[256])(Processor &proc);
 
     // Stack methods:
-    template <typename T>
-    inline T pop_as();
+    template <typename T> inline T pop_as();
 
     Processor();
-
-    inline unsigned char* write_head() {
-        return instructions + write_offset;
-    }
-
+    
     void print_instructions(int start) {
         printf("===========================================\n");
         
-        for (unsigned int i = start; i < write_offset;) {
+        for (unsigned int i = start; i < instructions - write_head;) {
             int int_val;
 
             // Eagerly copy instructions[i+1] to int_val. The value

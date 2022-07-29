@@ -1,3 +1,15 @@
+// The Boba runtime.
+
+// Object types:
+// 1. booleans
+// 2. integers
+// 3. floats (doubles)
+// 4. lists
+// 5. closures
+// 6. io (files, etc)
+// 7. strings
+// 8. nil
+
 #include "runtime.h"
 #include <stddef.h>
 
@@ -11,20 +23,14 @@
 // Relative emit - emits an int exactly at write_offset, then advances
 // write_offset.
 inline void Runtime::emit_push_int(int i) {
+    mem_put<Instruction>(Instruction::PushInt, proc.write_head);
+    proc.write_head += sizeof(Instruction);
 
-    // For now, we'll actually only consider one size. It may be
-    // useful down the line to break up push_i into a push_i where the
-    // arguments are different sizes to save space. Right now we have
-    // a lot of empty bytes in the instruction buffer.
-    mem_put<Instruction>(Instruction::PushInt, proc.write_head());
-    proc.write_offset += sizeof(Instruction);
-
-    mem_put<int>(i, proc.write_head());
-    proc.write_offset += sizeof(int);
+    mem_put<int>(i, proc.write_head);
+    proc.write_head += sizeof(int);
 }
 
-
-// Emit a push_ref instruction for a symbol with name `name`.
+// Emit a push_ref instruction for a symbol.
 inline void Runtime::emit_push_ref(std::unique_ptr<AST>& ast) {
     // Figure out this ref's index. Start at the current environment
     // and go back up the stack, looking for the name. If not found,
@@ -43,10 +49,10 @@ inline void Runtime::emit_push_ref(std::unique_ptr<AST>& ast) {
     if (var_index < 0)
         err_token(ast->token, "Undefined symbol '" + name + "'");
 
-    mem_put<Instruction>(Instruction::PushRef, proc.write_head());
-    proc.write_offset += sizeof(Instruction);
-    mem_put<int>(var_index, proc.write_head());
-    proc.write_offset += sizeof(int);
+    mem_put<Instruction>(Instruction::PushRef, proc.write_head);
+    proc.write_head += sizeof(Instruction);
+    mem_put<int>(var_index, proc.write_head);
+    proc.write_head += sizeof(int);
 }
 
 
@@ -64,7 +70,6 @@ void Runtime::emit_push(std::unique_ptr<AST>& ast) {
 }
 
 void Runtime::emit_expr(std::unique_ptr<AST>& ast) {
-
     if (ast->children.size() == 0) {
         if (ast->type != ASTType::Expr)
             emit_push(ast);
@@ -85,12 +90,11 @@ void Runtime::emit_expr(std::unique_ptr<AST>& ast) {
 
 // Emit a function call.
 void Runtime::emit_call(std::unique_ptr<AST>& ast) {
-
     auto& first = ast->children[0];
     std::string& fn_name = first->token->string_value;
 
-    const int n_args = ast->children.size() - 1;
-    bool is_builtin = builtins.count(fn_name) > 0;
+    //    const int n_args = ast->children.size() - 1;
+    //    bool is_builtin = builtins.count(fn_name) > 0;
 
     // First, add all the operands to the stack:
     for (unsigned long i = 1; i < ast->children.size(); i++) {
@@ -102,86 +106,37 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast) {
         }
     }
 
+    // Get the function's index and instruction pointer:
+    int var_index = -1;
 
-    // Builtin functions have their own entry in builtins.
-    if (is_builtin) {
-
-        // Won't insert a new element because we know the entry exists
-        // already.
-
-        BuiltinEntry entry = builtins.find(fn_name)->second;
-        
-        // Check special case for "-":
-        if (fn_name == "-") {
-            if (n_args == 1) {
-                mem_put<Instruction>(Instruction::Neg,
-                                     proc.write_head());
-
-                proc.write_offset += sizeof(Instruction);
-            }
-            else if (n_args == 2) {
-                mem_put<Instruction>(Instruction::Sub,
-                                     proc.write_head());
-                proc.write_offset += sizeof(Instruction);
-            }
-            else {
-                // TODO: error here
-            }
-            return;
+    for (int i = scopes.size() - 1; i >= 0; i--) {
+        auto& var_indices = scopes[i].var_indices;
+        if (var_indices.count(fn_name) > 0) {
+            var_index = var_indices[fn_name];
+            break;
         }
-
-        // Handle variadic arguments:
-        if (entry.n_args == -1) {
-            mem_put<Instruction>(entry.inst, proc.write_head());
-            proc.write_offset += sizeof(Instruction);
-
-            mem_put<int>(n_args, proc.write_head());
-            proc.write_offset += sizeof(int);
-            return;
-            
-        }
-
-        // Check if the program supplied a correct number of
-        // arguments:
-        if (entry.n_args != n_args) {
-
-            // TODO: make this an actual error function.
-            printf("Error: '%s' expects %d arguments, got %d\n",
-                   fn_name.c_str(),
-                   entry.n_args,
-                   n_args);
-            exit(-1);
-        }
-
-        // Insert function opcode into the instruction array:
-        mem_put<Instruction>(entry.inst, proc.write_head());
-        proc.write_offset += sizeof(Instruction);     
     }
 
-    // Not a builtin function; look it up and insert a call
-    // instruction.
+    if (var_index < 0)
+        err_token(first->token, "Undefined function '"
+                  + fn_name + "'");
+
+    
+    // If this is a builtin function, just inline it. It is guaranteed
+    // to be just one instruction.
+    if (var_index < builtin_counter) {
+        auto value = proc.envs.front()[var_index];
+        auto closure = value->as<std::shared_ptr<Closure>>();
+        mem_put<unsigned char>(closure->instructions[0],
+                               proc.write_head);
+        proc.write_head += sizeof(unsigned char);
+    }
+
     else {
-        // Get the function's index and instruction pointer:
-        int var_index = -1;
-
-        for (int i = scopes.size() - 1; i >= 0; i--) {
-            auto& var_indices = scopes[i].var_indices;
-            if (var_indices.count(fn_name) > 0) {
-                var_index = var_indices[fn_name];
-                break;
-            }
-        }
-
-        if (var_index < 0)
-            err_token(first->token, "Undefined function '"
-                      + fn_name + "'");
-        
-
-        // TODO: Check if correct number of arguments is supplied        
-        mem_put<Instruction>(Instruction::Call, proc.write_head());
-        proc.write_offset += sizeof(Instruction);
-        mem_put<int>(var_index, proc.write_head());
-        proc.write_offset += sizeof(int);
+        mem_put<Instruction>(Instruction::Call, proc.write_head);
+        proc.write_head += sizeof(Instruction);
+        mem_put<int>(var_index, proc.write_head);
+        proc.write_head += sizeof(int);
     }
 }
 
@@ -213,9 +168,9 @@ void Runtime::emit_if(std::unique_ptr<AST>& ast) {
     // instruction that runs before the if block. We will later use
     // old_woff as an offset into proc.instructions to write the
     // jmp_false instruction.
-    long old_woff = proc.write_offset;
-    proc.write_offset += sizeof(Instruction);
-    proc.write_offset += sizeof(int);
+    unsigned char* old_head = proc.write_head;
+    proc.write_head += sizeof(Instruction);
+    proc.write_head += sizeof(int);
 
     // Emit if-part's bytecode.
     emit_expr(if_part);
@@ -223,38 +178,36 @@ void Runtime::emit_if(std::unique_ptr<AST>& ast) {
     // else_woff is where the else bytecode will begin, accounting for
     // the additional jump instruction we're going to insert at the
     // end of the if block.
-    long else_woff = proc.write_offset + sizeof(Instruction)
+    unsigned char* else_head = proc.write_head + sizeof(Instruction)
         + sizeof(int);
     
     // At old_woff, insert a JmpFalse with the address of the byte
     // after the if block.
-    mem_put<Instruction>(Instruction::JmpFalse,
-                         proc.instructions + old_woff);
+    mem_put<Instruction>(Instruction::JmpFalse, old_head);
 
     // Add number of bytes emitted between else_woff and old_woff as
     // an argument to jmp_false.
-    mem_put<int>(else_woff - old_woff,
-                 proc.instructions + old_woff + sizeof(Instruction));
+    mem_put<int>(else_head - old_head, old_head
+                 + sizeof(Instruction));
 
     // Now save the write_offset again as old_woff. We're going to use
     // this to write the jmp instruction which jumps to the byte after
     // the else block.
-    old_woff = proc.write_offset;
+    old_head = proc.write_head;
 
     // Move write_offset past our allocated space:
-    proc.write_offset += sizeof(Instruction);
-    proc.write_offset += sizeof(int);
+    proc.write_head += sizeof(Instruction);
+    proc.write_head += sizeof(int);
 
     // Emit else-part's bytecode.
     emit_expr(else_part);
 
     // At old_woff (the end of the if block), insert an unconditional
     // jump to skip over the else block if it ever gets executed.
-    mem_put<Instruction>(Instruction::Jmp,
-                         proc.instructions + old_woff);
+    mem_put<Instruction>(Instruction::Jmp, old_head);
 
-    mem_put<int>(proc.write_offset - old_woff,
-                 proc.instructions + old_woff + sizeof(Instruction));
+    mem_put<int>(proc.write_head - old_head, old_head
+                 + sizeof(Instruction));
 }
 
 // Emit the bytecode for a def.
@@ -280,35 +233,25 @@ void Runtime::emit_def(std::unique_ptr<AST>& ast) {
     
     emit_expr(right);
     
-    mem_put<Instruction>(Instruction::Store, proc.write_head());
-    proc.write_offset += sizeof(Instruction);
+    mem_put<Instruction>(Instruction::Store, proc.write_head);
+    proc.write_head += sizeof(Instruction);
 
-    mem_put<int>(var_number, proc.write_head());
-    proc.write_offset += sizeof(int);
+    mem_put<int>(var_number, proc.write_head);
+    proc.write_head += sizeof(int);
 }
 
 // Emit the bytecode to generate a lambda.
 void Runtime::emit_fn(std::unique_ptr<AST>& ast) {
-    
-    // Bytecode for emitting an fn:
-    // jmp to create_closure instruction
-    // load arg1 <- actual closure code begins here
-    // load arg2
-    // ...exprs...
-    // ret
-    // create_closure -- copies the entire current environment (NOT
-    // the pointer!), makes a shared_ptr to it, and creates a closure
-    // that possesses the shared_Ptr
-    
+
     // This creates a new scope.
     scopes.push_back(Scope());
 
     auto& param_list = ast->children[1];
 
-    long old_woff = proc.write_offset;
+    unsigned char* old_head = proc.write_head;
 
     // Allocate space for jump instruction
-    proc.write_offset += sizeof(Instruction) + sizeof(int);
+    proc.write_head += sizeof(Instruction) + sizeof(int);
         
     // It is assumed that when we make a function call, all the
     // arguments are pushed onto the stack before the jump. Here we
@@ -326,62 +269,58 @@ void Runtime::emit_fn(std::unique_ptr<AST>& ast) {
         std::string &param_name = child->token->string_value;
         scopes.back().var_indices[param_name] = var_counter;
         
-        mem_put<Instruction>(Instruction::Store, proc.write_head());
-        proc.write_offset += sizeof(Instruction);
+        mem_put<Instruction>(Instruction::Store, proc.write_head);
+        proc.write_head += sizeof(Instruction);
         
-        mem_put<int>(var_counter, proc.write_head());
-        proc.write_offset += sizeof(int);
+        mem_put<int>(var_counter, proc.write_head);
+        proc.write_head += sizeof(int);
         
         var_counter++;
     }
-    
+
     // Now go through the rest of the expressions in the function and
     // emit bytecode for them.
-    for (size_t i = 2; i < ast->children.size(); i++)
+    for (size_t i = 2; i < ast->children.size(); i++) {
         emit_expr(ast->children[i]);
-    
+    }
+
     // Lastly, emit the ret instruction:
-    mem_put<Instruction>(Instruction::Ret, proc.write_head());
-    proc.write_offset += sizeof(Instruction);
+    mem_put<Instruction>(Instruction::Ret, proc.write_head);
+    proc.write_head += sizeof(Instruction);
 
-    mem_put<Instruction>(Instruction::CreateClosure,
-                         proc.write_head());
-    proc.write_offset += sizeof(Instruction);
-
-    int code_beg_woff = old_woff + sizeof(Instruction)
+    // The closure body begins `sizeof(Instruction) + sizeof(int)`
+    // bytes after the jump.
+    unsigned char* code_begin_ptr = old_head + sizeof(Instruction)
         + sizeof(int);
+    
+    unsigned char* code_end_ptr = proc.write_head;
 
-    int code_end_woff = proc.write_offset - sizeof(Instruction);
-    
-    mem_put<int>(code_end_woff - code_beg_woff,
-                 proc.write_head());
-    
-    proc.write_offset += sizeof(int);
+    mem_put<Instruction>(Instruction::CreateClosure, proc.write_head);
+    proc.write_head += sizeof(Instruction);
+
+    mem_put<int>(code_end_ptr - code_begin_ptr, proc.write_head);
+    proc.write_head += sizeof(int);
     
     // Now go back to the beginning and add the jmp that skips over
     // the function body.
-    mem_put<Instruction>(Instruction::Jmp,
-                         proc.instructions + old_woff);
+    mem_put<Instruction>(Instruction::Jmp, old_head);
     
-    mem_put<int>(proc.write_offset
-                 - old_woff
-                 - sizeof(Instruction)
-                 - sizeof(int),
-                 proc.instructions + old_woff + sizeof(Instruction));
+    mem_put<int>(proc.write_head - old_head - sizeof(Instruction)
+                 - sizeof(int), old_head + sizeof(Instruction));
     
     // Destroy current scope:
     scopes.pop_back();
 }
 
 std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast) {
-    long long old_woff = proc.write_offset;
+    unsigned char* old_head = proc.write_head;
     emit_expr(ast);
-    
+
     // TODO: Implement some kind of error flag that we can set during
     // bytecode generation. At this point, we should check the error
     // flag and potentially zero out all the bytecode we just
     // generated if we know it is invalid.
-    
+
     // Run until we hit a 0 byte
     while (*proc.ip) {
         unsigned char inst = *proc.ip;
@@ -395,13 +334,13 @@ std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast) {
     if (ast->children.size() > 0) {
         auto form = ast->children[0]->token->string_value;
         if (form != "def") {
-            std::memset(proc.instructions + old_woff,
+            std::memset(old_head,
                         0,
-                        proc.write_offset - old_woff);
+                        proc.write_head - old_head);
 
             // Reset instruction pointer:
-            proc.write_offset = old_woff;
-            proc.ip = proc.instructions + proc.write_offset;
+            proc.write_head = old_head;
+            proc.ip = old_head;
         }
     }
 

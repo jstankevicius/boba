@@ -152,33 +152,6 @@
 ;;=>142
 
 
-
-; Negation operator tests:
-;;name=negation-test-1
-(- 0)
-;;=>0
-
-
-;;name=negation-test-2
-(- 1)
-;;=>-1
-
-
-;;name=negation-test-3
-(- -2)
-;;=>2
-
-
-;;name=negation-test-4
-(- (- (- 0)))
-;;=>0
-
-;;name=negation-test-5
-(- (- (- (- (- (- (- (- 2))))))))
-;;=>2
-
-
-
 ; Multiplication operator tests
 ;;name=multiplication-test-1
 (* 1 1)

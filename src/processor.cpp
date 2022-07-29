@@ -110,10 +110,10 @@ void create_closure(Processor& proc) {
         - sizeof(int) - offset;
 
     auto closure = std::make_shared<Closure>();
-    std::memset(closure->instructions, 0, CLOSURE_INSTRUCTION_SIZE);
     std::memcpy(closure->instructions, code_begin, offset);
     
     closure->env = proc.envs.back();
+    closure->inst_size = offset;
 
     Value v;
     v.type = ValueType::Closure;
@@ -215,7 +215,10 @@ void less_eq(Processor &proc) {
 }
 
 Processor::Processor() {
-
+    envs.push_back(std::unordered_map<int, std::shared_ptr<Value>>());
+    // Zero out instructions
+    std::memset(instructions, 0, PROC_INSTRUCTION_SIZE);
+    
     // Initialize instruction table
     INST_ENTRY(Instruction::PushInt, push_int);
     INST_ENTRY(Instruction::PushRef, push_ref);

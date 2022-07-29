@@ -9,7 +9,6 @@
 #include "runtime.h"
 
 
-
 class TestRunner {
 
 private:
@@ -46,7 +45,7 @@ int main() {
     // Prefix that precedes the expected output:
     const std::string prefix = ";;=>";
     const std::string name_prefix = ";;name=";
-        
+
     // Get expected outputs from file:
     while (std::getline(test_file, line)) {
         content += line;
@@ -64,7 +63,7 @@ int main() {
     int successes = 0;
     int failures = 0;
     
-    for (uint32_t i = 0; i < expected_outputs.size(); i++) {
+    for (size_t i = 0; i < expected_outputs.size(); i++) {
         std::cout << "Running " << section_names[i] << "... ";
         auto result = t.eval_expr()->to_string();
         if (result == expected_outputs[i]) {
