@@ -81,13 +81,11 @@ void jmp_false(Processor &proc)
 void call(Processor &proc)
 {
     // Push the ip after the call instruction onto the call stack:
-    proc.call_stack.push_back(proc.ip
-                              + sizeof(Instruction)
-                              + sizeof(int));
+    proc.call_stack.push_back(proc.ip + sizeof(Instruction) + sizeof(int));
 
     // Move ip to the first byte of the argument
     proc.ip += sizeof(Instruction);
-           
+
     // Get index of the function we're calling
     int var_index = mem_get<int>(proc.ip);
 

@@ -10,6 +10,34 @@
 // 7. strings
 // 8. nil
 
+/*
+
+  (quote (+ 1 2))
+
+  
+  push_sym +
+  push_int 1
+  push_int 2
+  push_nil
+  cons            -> (2 . '())
+  cons            -> (1 . (2 . '()))
+  cons            -> (+ . (1 . (2 . '()))) -> (+ 1 2)
+
+  Imagine we have a statement like
+  (eval (quote (if true 1 0)))
+  (quote (if true 1 0)) just returns -> (if true 1 0) (a list)
+
+  Now what should eval do?
+
+  Eval can just be an insanely expensive instruction. What it can do is take the
+  list that's on the top of the stack, reconstruct the AST from the list, and
+  then call eval_ast on the AST.
+
+  The alternative is to just represent all syntax as a bunch of cons cells
+  (i.e. a list). That way, eval can really just call itself.
+  
+ */
+
 #include "runtime.h"
 #include <stddef.h>
 
@@ -20,6 +48,20 @@
 #include "processor.h"
 #include "error.h"
 
+struct BuiltinEntry
+{
+    std::string name;
+    int num_args;
+    bool variadic;
+    Instruction inst;
+
+    BuiltinEntry(std::string name, int n_args, bool variadic, Instruction inst)
+        : name(name), num_args(n_args), variadic(variadic), inst(inst)
+    {
+        
+    }
+};
+
 Runtime::Runtime()
 {
     scopes.push_back(Scope());
@@ -28,35 +70,34 @@ Runtime::Runtime()
     auto& env = proc.envs.back();
     auto& scope = scopes.back();
 
-    // This should exist outside the constructor or something
-    const std::tuple<std::string, int, bool, Instruction> builtins[] = {
+    const BuiltinEntry builtins[] = {
 
         // Function name, # args, variadic, inst
-        std::make_tuple("+", 2, false, Instruction::Add),
-        std::make_tuple("-", 2, false, Instruction::Sub),
-        std::make_tuple("*", 2, false, Instruction::Mul),
-        std::make_tuple("/", 2, false, Instruction::Div),
-        std::make_tuple("=", 2, false, Instruction::Eq),
-        std::make_tuple(">", 2, false, Instruction::Greater),
-        std::make_tuple(">=", 2, false, Instruction::GreaterEq),
-        std::make_tuple("<", 2, false, Instruction::Less),
-        std::make_tuple("<=", 2, false, Instruction::LessEq),
+        BuiltinEntry("+",    2, false, Instruction::Add),
+        BuiltinEntry("-",    2, false, Instruction::Sub),
+        BuiltinEntry("*",    2, false, Instruction::Mul),
+        BuiltinEntry("/",    2, false, Instruction::Div),
+        BuiltinEntry("=",    2, false, Instruction::Eq),
+        BuiltinEntry(">",    2, false, Instruction::Greater),
+        BuiltinEntry(">=",   2, false, Instruction::GreaterEq),
+        BuiltinEntry("<",    2, false, Instruction::Less),
+        BuiltinEntry("<=",   2, false, Instruction::LessEq),
     };
 
     // Insert builtin information into the global scope and the
     // global processor environment.
     for (const auto& builtin : builtins)
     {
-            
-        auto& fn_name = std::get<0>(builtin);
-        int n_args = std::get<1>(builtin);
-        bool variadic = std::get<2>(builtin);
-        Instruction instruction = std::get<3>(builtin);
+        auto& fn_name = builtin.name;
+        int n_args = builtin.num_args;
+        bool variadic = builtin.variadic;
+        Instruction instruction = builtin.inst;
 
         // TODO: Maybe constructing closures shouldn't be this annoying.
-        auto c = std::make_shared<Closure>(n_args,
-                                           variadic,
-                                           static_cast<unsigned char>(instruction));
+        auto c = std::make_shared<Closure>(
+            n_args,
+            variadic,
+            static_cast<unsigned char>(instruction));
         
         Value v;
         v.type = ValueType::Closure;
@@ -72,8 +113,7 @@ Runtime::Runtime()
 
 // Relative emit - emits an int exactly at write_offset, then advances
 // write_offset.
-inline void
-Runtime::emit_push_int(int i)
+inline void Runtime::emit_push_int(int i)
 {
     mem_put<Instruction>(Instruction::PushInt, proc.write_head);
     proc.write_head += sizeof(Instruction);
