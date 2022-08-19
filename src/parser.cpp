@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ast.h"
+#include "environment.h"
 #include "error.h"
 #include "lexer.h"
 #include "token.h"
@@ -80,50 +81,75 @@ void expect_token_type(TokenType type,
 
 // Parse an s-expression from the token stream. An expression (for
 // now) is anything that is enclosed by parentheses.
-std::unique_ptr<AST> parse_expr(std::deque<std::shared_ptr<Token>>& tokens)
+std::shared_ptr<ConsCell> parse_expr(std::deque<std::shared_ptr<Token>>& tokens)
 {
 
-    auto ast = std::make_unique<AST>(ASTType::Expr, tokens.front());
+    auto cons_val = std::make_shared<Value>();
+    auto first = cons_val;
+    
     expect_token_string("(", tokens);
 
     while (tokens.size() > 0 && tokens.front()->string_value != ")")
     {
+        cons_val->type = ValueType::ConsCell;
         auto front = tokens.front();
+        auto cons = std::make_shared<ConsCell>();
+        cons->cdr = std::make_shared<Value>();
 
         switch (front->type)
         {
         case (TokenType::Symbol):
-            ast->add_leaf_child(ASTType::Symbol, front);
+        {
+            auto sym_val = std::make_shared<Value>();
+            sym_val->type = ValueType::Symbol;
+            sym_val->value = std::make_shared<Symbol>(front->string_value);
+            cons->car = sym_val;
+            
             expect_token_type(TokenType::Symbol, tokens);
             break;
-        case (TokenType::StrLiteral):
-            ast->add_leaf_child(ASTType::StrLiteral, front);
-            expect_token_type(TokenType::StrLiteral, tokens);
-            break;
+        }
         case (TokenType::IntLiteral):
-            ast->add_leaf_child(ASTType::IntLiteral, front);
+        {
+            auto int_val = std::make_shared<Value>();
+            int_val->type = ValueType::Int;
+            int_val->value = std::stoi(front->string_value);
+            cons->car = int_val;
+            
             expect_token_type(TokenType::IntLiteral, tokens);
             break;
-        case (TokenType::FloatLiteral):
-            ast->add_leaf_child(ASTType::FloatLiteral, front);
-            expect_token_type(TokenType::FloatLiteral, tokens);
-            break;
-        case (TokenType::BoolLiteral):
-            ast->add_leaf_child(ASTType::BoolLiteral, front);
-            expect_token_type(TokenType::BoolLiteral, tokens);
-            break;
+        }
         default:
+        {
             if (front->string_value == "(")
             {
-                ast->children.push_back(parse_expr(tokens));
+                if (tokens.at(1)->string_value == ")")
+                {
+                    auto nil_val = std::make_shared<Value>();
+                    nil_val->type = ValueType::EmptyList;
+                    nil_val->value = nullptr;
+                    cons->car = nil_val;
+                }
+
+                else
+                {
+                    auto expr = parse_expr(tokens);
+                    auto expr_val = std::make_shared<Value>();
+                    expr_val->type = ValueType::ConsCell;
+                    expr_val->value = expr;
+                }
             }
             else
             {
                 err_token(front, "internal parser error: unhandled token type");
             }
         }
+        }
+        cons_val->value = cons;
+        cons_val = cons_val->as_ptr<ConsCell>()->cdr;
     }
+
+    printf("%zu\n", first->as_ptr<ConsCell>()->size());
     
     expect_token_string(")", tokens);
-    return ast;
+    return first->as_ptr<ConsCell>();
 }

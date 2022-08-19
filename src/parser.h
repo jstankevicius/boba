@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "ast.h"
+#include "environment.h"
 #include "token.h"
 
-std::unique_ptr<AST>
-parse_expr(std::deque<std::shared_ptr<Token>>& tokens);
+std::shared_ptr<ConsCell> parse_expr(std::deque<std::shared_ptr<Token>>& tokens);

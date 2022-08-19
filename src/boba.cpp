@@ -5,7 +5,7 @@
 
 #include "lexer.h"
 #include "parser.h"
-#include "runtime.h"
+//#include "runtime.h"
 
 int main(int argc, char *argv[])
 {
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     std::string content((std::istreambuf_iterator<char>(file)),
                         (std::istreambuf_iterator<char>()   ));
 
-    Runtime runtime;
+    //Runtime runtime;
     TextHandle handle(content);
     
     auto tokens = tokenize(handle);
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     while (tokens.size() > 0)
     {
         auto ast = parse_expr(tokens);
-        auto result = runtime.eval_ast(ast);
-        std::cout << result->to_string() << '\n';
+        //auto result = runtime.eval_ast(ast);
+        //std::cout << result->to_string() << '\n';
     }
 }

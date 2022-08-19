@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ast.h"
 #include "environment.h"
 #include "processor.h"
 
@@ -28,19 +27,18 @@ private:
     int builtin_counter = 0;
 
     void emit_push_int(int i);
-    void emit_push_ref(std::unique_ptr<AST>& ast);
-    void emit_push(std::unique_ptr<AST>& ast);
-    void emit_do(std::unique_ptr<AST>& ast);
-    void emit_if(std::unique_ptr<AST>& ast);
-    void emit_cond(std::unique_ptr<AST>& ast);
-    void emit_def(std::unique_ptr<AST>& ast);
-    void emit_fn(std::unique_ptr<AST>& ast);
-    void emit_call(std::unique_ptr<AST>& ast);
-    void emit_expr(std::unique_ptr<AST>& ast);
+    void emit_push_ref(std::shared_ptr<Value> value);
+    void emit_push(std::shared_ptr<Value> value);
+    void emit_if(std::shared_ptr<Value> value);
+    void emit_cond(std::shared_ptr<Value> value);
+    void emit_def(std::shared_ptr<Value> value);
+    void emit_fn(std::shared_ptr<Value> value);
+    void emit_call(std::shared_ptr<Value> value);
+    void emit_expr(std::shared_ptr<Value> value);
 
 public:
 
     Runtime();
 
-    std::shared_ptr<Value> eval_ast(std::unique_ptr<AST>& ast);
+    std::shared_ptr<Value> eval(std::shared_ptr<Value> value);
 };

@@ -9,14 +9,11 @@
 enum class ValueType
 {
     Nil,
-    Symbol,
     Int,
     Float,
     Str,
     Bool,
-    Closure,
-    ConsCell,
-    EmptyList
+    Closure
 };
 
 struct Value
@@ -24,11 +21,22 @@ struct Value
     ValueType type;
     std::any value;
 
-    Value() : type(ValueType::Nil) {}
+    Value()
+    {
+        type = ValueType::Nil;
+    }
     
-    Value(int v) : type(ValueType::Int), value(v) {}
+    Value(int v)
+    {
+        type = ValueType::Int;
+        value = v;
+    }
    
-    Value(bool v) : type(ValueType::Bool), value(v) {}
+    Value(bool v)
+    {
+        type = ValueType::Bool;
+        value = v;
+    }
 
     inline bool is_nil()
     {
@@ -38,11 +46,6 @@ struct Value
     template <typename T> inline T as()
     {
         return std::any_cast<T>(value);
-    }
-
-    template <typename T> inline std::shared_ptr<T> as_ptr()
-    {
-        return std::any_cast<std::shared_ptr<T>>(value);
     }
 
     std::string to_string()
@@ -86,39 +89,9 @@ struct Closure
     Closure(int n_args, bool last_param_variadic, unsigned char inst)
         : n_args(n_args), last_param_variadic(last_param_variadic)
     {
+        
         std::memset(instructions, 0, CLOSURE_INSTRUCTION_SIZE);
         instructions[0] = inst;
         inst_size++;
-    }
-};
-
-struct Symbol
-{
-    std::string str;
-
-    Symbol(std::string s) : str(s) {}
-};
-
-struct ConsCell
-{
-    std::shared_ptr<Value> car;
-    std::shared_ptr<Value> cdr;
-
-    size_t size()
-    {
-        if (cdr->type == ValueType::ConsCell)
-        {
-            return 1 + cdr->as_ptr<ConsCell>()->size();
-        }
-
-        else if (cdr->type == ValueType::Nil)
-        {
-            return 1;
-        }
-
-        else
-        {
-            return 2;
-        }
     }
 };

@@ -27,14 +27,31 @@
   (eval (quote (if true 1 0)))
   (quote (if true 1 0)) just returns -> (if true 1 0) (a list)
 
-  Now what should eval do?
+  OK, now suppose we have a list like this, bound to a value v.
+  (+ . (1 . (2 . '()))) -> (+ 1 2)
 
-  Eval can just be an insanely expensive instruction. What it can do is take the
-  list that's on the top of the stack, reconstruct the AST from the list, and
-  then call eval_ast on the AST.
+  How do we iterate over the list without having to write tons of horrible LL
+  code?
 
-  The alternative is to just represent all syntax as a bunch of cons cells
-  (i.e. a list). That way, eval can really just call itself.
+  auto cur = v;
+
+  while (cur->type != ValueType::EmptyList)
+  {
+      auto cons = v.as_ptr<ConsCell>();
+      auto car = cons->car->as_ptr<Symbol>();
+
+      cur = cons->cdr;
+  }
+
+  cdr's the difference between a quoted empty list and an unquoted empty list?
+  How do we represent those? Both can be ValueType::EmptyList.
+
+  How do we treat ValueType::EmptyList? If it is passed to eval, error out.
+  If we see a quote symbol and then an EmptyList, emit push_nil.
+
+  What's the difference between (define f (lambda () 0)) and
+  (define f '())?
+
   
  */
 
@@ -88,7 +105,7 @@ Runtime::Runtime()
     // global processor environment.
     for (const auto& builtin : builtins)
     {
-        auto& fn_name = builtin.name;
+        const auto& fn_name = builtin.name;
         int n_args = builtin.num_args;
         bool variadic = builtin.variadic;
         Instruction instruction = builtin.inst;
@@ -123,11 +140,11 @@ inline void Runtime::emit_push_int(int i)
 }
                                                                                   
 // Emit a push_ref instruction for a symbol.
-inline void Runtime::emit_push_ref(std::unique_ptr<AST>& ast)
+inline void Runtime::emit_push_ref(std::shared_ptr<Value> value)
 {
     // Figure out this ref's index. Start at the current environment and go back
     // up the stack, looking for the name. If not found, error out.
-    auto& name = ast->token->string_value;
+    auto& name = value->as_ptr<Symbol>()->str;
     
     int var_index = -1;
     for (int i = scopes.size() - 1; i >= 0; i--)
@@ -151,15 +168,16 @@ inline void Runtime::emit_push_ref(std::unique_ptr<AST>& ast)
     proc.write_head += sizeof(int);
 }
 
-void Runtime::emit_push(std::unique_ptr<AST>& ast)
+void Runtime::emit_push(std::shared_ptr<Value> value)
 {
-    switch (ast->type)
+
+    switch (value->type)
     {
-    case ASTType::IntLiteral:
-        emit_push_int(std::stoi(ast->token->string_value));
+    case ValueType::Int:
+        emit_push_int(value->as<int>());
         break;
-    case ASTType::Symbol:
-        emit_push_ref(ast);
+    case ValueType::Symbol:
+        emit_push_ref(value);
         break;
     default:
         break;
@@ -167,18 +185,12 @@ void Runtime::emit_push(std::unique_ptr<AST>& ast)
 }
 
 // Emit bytecode for an expression (or simply a symbol/literal).
-void Runtime::emit_expr(std::unique_ptr<AST>& ast)
+void Runtime::emit_expr(std::shared_ptr<Value> value)
 {
-    if (ast->children.size() == 0)
+    if (value->type != ValueType::ConsCell
+        && value->type != ValueType::EmptyList)
     {
-        if (ast->type != ASTType::Expr)
-        {
-            emit_push(ast);
-        }
-        
-        // If the AST is an expression but has 0 children, we won't emit any
-        // code for it at all.
-        return;
+        emit_push(value);
     }
     
     auto& first = ast->children[0]->token->string_value;
@@ -186,10 +198,6 @@ void Runtime::emit_expr(std::unique_ptr<AST>& ast)
     if (first == "def")
     {
         emit_def(ast);
-    }
-    else if (first == "do")
-    {
-        emit_do(ast);
     }
     else if (first == "if")
     {
@@ -206,7 +214,7 @@ void Runtime::emit_expr(std::unique_ptr<AST>& ast)
 }
 
 // Emit a function call.
-void Runtime::emit_call(std::unique_ptr<AST>& ast)
+void Runtime::emit_call(std::shared_ptr<Value> value)
 {
     auto& first = ast->children[0];
 
@@ -286,17 +294,8 @@ void Runtime::emit_call(std::unique_ptr<AST>& ast)
     }
 }
 
-// Emit the bytecode for a do statement.
-void Runtime::emit_do(std::unique_ptr<AST>& ast)
-{
-    for (size_t i = 1; i < ast->children.size(); i++)
-    {
-        emit_expr(ast->children[i]);
-    }
-}
-
 // Emit the bytecode for an if statement.
-void Runtime::emit_if(std::unique_ptr<AST>& ast)
+void Runtime::emit_if(std::shared_ptr<Value> value)
 {
     // Structure of an if statement in bytecode:
     //
@@ -354,7 +353,7 @@ void Runtime::emit_if(std::unique_ptr<AST>& ast)
 }
 
 // Emit the bytecode for a def.
-void Runtime::emit_def(std::unique_ptr<AST>& ast)
+void Runtime::emit_def(std::shared_ptr<Value> value)
 {
     // Leftmost child is always the symbol name
     // TODO: error handling here, like for having too many child nodes
@@ -386,7 +385,7 @@ void Runtime::emit_def(std::unique_ptr<AST>& ast)
 }
 
 // Emit the bytecode to generate a lambda.
-void Runtime::emit_fn(std::unique_ptr<AST>& ast)
+void Runtime::emit_fn(std::shared_ptr<Value> value)
 {
 
     // This creates a new scope.
@@ -457,7 +456,7 @@ void Runtime::emit_fn(std::unique_ptr<AST>& ast)
     scopes.pop_back();
 }
 
-std::shared_ptr<Value> Runtime::eval_ast(std::unique_ptr<AST>& ast)
+std::shared_ptr<Value> Runtime::eval(std::shared_ptr<Value> value)
 {
     unsigned char* old_head = proc.write_head;
     emit_expr(ast);
